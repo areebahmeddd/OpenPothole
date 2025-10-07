@@ -3,9 +3,9 @@ version: 2
 updates:
   # Node.js frontend dependencies
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     open-pull-requests-limit: 1
     groups:
       all-dependencies:
@@ -19,7 +19,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     open-pull-requests-limit: 1
     groups:
       all-actions:
