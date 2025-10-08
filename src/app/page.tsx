@@ -1,5 +1,6 @@
 import { Footer } from "@/components/footer";
 import { MorphingText } from "@/components/morphing-text";
+import { StatsCard } from "@/components/stats-card";
 import { Button } from "@/components/ui/button";
 import { DotPattern } from "@/components/ui/dot-pattern";
 import { cn } from "@/lib/utils";
@@ -96,32 +97,22 @@ export default async function HomePage() {
 
           {/* Stats Cards - Part of Hero */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-colors duration-300">
-              <p className="text-sm font-medium text-muted-foreground mb-3">
-                Potholes Reported
-              </p>
-              <h3 className="text-5xl font-bold tracking-tight">
-                {stats.total?.toLocaleString() ?? "0"}
-              </h3>
-            </div>
-
-            <div className="flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-colors duration-300">
-              <p className="text-sm font-medium text-muted-foreground mb-3">
-                Potholes Fixed
-              </p>
-              <h3 className="text-5xl font-bold tracking-tight">
-                {stats.fixed?.toLocaleString() ?? "0"}
-              </h3>
-            </div>
-
-            <div className="flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-colors duration-300">
-              <p className="text-sm font-medium text-muted-foreground mb-3">
-                Resolution Rate
-              </p>
-              <h3 className="text-5xl font-bold tracking-tight">
-                {Math.round(stats.rate || 0)}%
-              </h3>
-            </div>
+            <StatsCard
+              label="Potholes Reported"
+              value={stats.total || 0}
+              animationDelay={0}
+            />
+            <StatsCard
+              label="Potholes Fixed"
+              value={stats.fixed || 0}
+              animationDelay={200}
+            />
+            <StatsCard
+              label="Resolution Rate"
+              value={Math.round(stats.rate || 0)}
+              suffix="%"
+              animationDelay={400}
+            />
           </div>
         </div>
       </section>
