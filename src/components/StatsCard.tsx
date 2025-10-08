@@ -40,9 +40,8 @@ export function StatsCard({
         const progress = Math.min(elapsed / duration, 1);
 
         const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-        const currentValue = Math.floor(
-          startValue + (endValue - startValue) * easeOutCubic,
-        );
+        const currentValue =
+          startValue + (endValue - startValue) * easeOutCubic;
 
         setDisplayValue(currentValue);
 
@@ -86,7 +85,9 @@ export function StatsCard({
             </div>
           ) : (
             <span>
-              {displayValue.toLocaleString()}
+              {displayValue % 1 === 0
+                ? displayValue.toLocaleString()
+                : displayValue.toFixed(1).replace(/\.0$/, "")}
               {suffix}
             </span>
           )}

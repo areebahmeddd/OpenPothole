@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/hooks/useToast";
 import { useEffect, useRef, useState } from "react";
 
 type Report = {
@@ -64,6 +65,7 @@ export default function PotholeMap({
     null,
   );
   const [locationError, setLocationError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const defaultCenter: [number, number] = [12.9716, 77.5946];
   const center: [number, number] =
@@ -273,6 +275,16 @@ export default function PotholeMap({
       mapRef.current.setView(userLocation, 14, { animate: true, duration: 1 });
     }
   }, [userLocation]);
+
+  useEffect(() => {
+    if (locationError) {
+      toast({
+        title: "Location Disabled",
+        description: locationError,
+        variant: "destructive",
+      });
+    }
+  }, [locationError, toast]);
 
   useEffect(() => {
     if (requestLocation) {

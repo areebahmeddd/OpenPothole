@@ -29,7 +29,6 @@ export async function PATCH(
   } else if (body.action === "verifyNotFixed") {
     r.verifications.notFixed += 1;
     if (r.status === "fixed" || r.status === "verified") {
-      // fall back if community flags not fixed
       if (r.verifications.notFixed >= 2) {
         r.status = "acknowledged";
       }

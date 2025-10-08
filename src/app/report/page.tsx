@@ -3,13 +3,13 @@
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { DotPattern } from "@/components/ui/DotPattern";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
+import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -27,21 +27,43 @@ export default function ReportPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
   );
-  const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [isAdditionalDetailsExpanded, setIsAdditionalDetailsExpanded] =
+    useState(false);
+  const [locationDetails, setLocationDetails] = useState<any>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const { data: stats } = useSWR("/api/reports/stats", fetcher);
+
+  const fetchLocationDetails = async (lat: number, lng: number) => {
+    setLocationLoading(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=en`,
+      );
+      const data = await response.json();
+      setLocationDetails(data);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   useEffect(() => {
     setLocLoading(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          const newCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          };
+          setCoords(newCoords);
           setLocLoading(false);
+          fetchLocationDetails(newCoords.lat, newCoords.lng);
         },
         () => setLocLoading(false),
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 },
@@ -73,7 +95,6 @@ export default function ReportPage() {
           photoDataUrl,
           lat: coords?.lat,
           lng: coords?.lng,
-          address,
           description,
           severity,
         }),
@@ -142,37 +163,59 @@ export default function ReportPage() {
               </p>
             </div>
 
-            <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6 text-left space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Tracking ID</p>
-                <p className="text-lg font-mono font-semibold">{successId}</p>
+            <div className="group relative flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-all duration-500 overflow-hidden">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--primary)]/3"></div>
+              <div
+                className="absolute inset-0 rounded-xl border border-[var(--primary)]/20 animate-pulse"
+                style={{ animationDuration: "3s" }}
+              ></div>
+              <div className="relative z-10 text-center space-y-3">
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-[var(--primary)] transition-colors duration-300">
+                  Tracking ID
+                </p>
+                <h3 className="text-3xl font-bold tracking-tight font-mono group-hover:scale-105 transition-transform duration-300">
+                  {successId}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Save this ID to track your report&apos;s status and updates.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Save this ID to track your report&apos;s status and updates.
-              </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 asChild
                 size="lg"
-                className="bg-[var(--primary)] hover:bg-[var(--primary-dark)]"
+                className="bg-[var(--primary)] hover:bg-[var(--primary)]"
               >
                 <Link href={`/potholes/${successId}`}>View Report</Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="hover:bg-background hover:border-border"
+              >
                 <Link href="/map">View Map</Link>
               </Button>
               <Button asChild size="lg" variant="ghost">
-                <Link href="/">Go Home</Link>
+                <Link href="/" className="inline-flex items-center gap-2">
+                  <ArrowRight className="h-4 w-4" />
+                  Go Home
+                </Link>
               </Button>
             </div>
 
             {stats && (
-              <p className="text-sm text-muted-foreground pt-4">
-                You&apos;re one of {stats.total.toLocaleString()} citizens
-                making a difference
-              </p>
+              <div className="pt-4 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-sm font-medium">
+                  <div className="w-2 h-2 bg-[var(--primary)] rounded-full animate-pulse"></div>
+                  <span>
+                    You&apos;re one of {stats.total.toLocaleString()} citizens
+                    making a difference
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         </main>
@@ -183,225 +226,453 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
-      <DotPattern
-        className={cn(
-          "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
-        )}
-      />
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="relative min-h-screen">
+        <DotPattern className="fill-muted-foreground/40 [mask-image:radial-gradient(1600px_circle_at_center,white,transparent)]" />
 
-      <main className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
-        <div className="max-w-2xl mx-auto w-full space-y-12">
-          <div className="text-center space-y-3">
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-              Report a Pothole
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Help improve Bengaluru&apos;s roads. Quick, anonymous, and
-              impactful.
-            </p>
-          </div>
+        <main className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
+          <div className="max-w-2xl mx-auto w-full space-y-12">
+            <div className="text-center space-y-3">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+                Report a Pothole
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                Help improve Bengaluru&apos;s roads. Quick, anonymous, and
+                impactful.
+              </p>
+            </div>
 
-          <div className="rounded-2xl border bg-card/50 backdrop-blur-sm p-8 sm:p-10 space-y-8">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="photo" className="text-base font-semibold">
-                  1. Photo Evidence
-                </Label>
-                {photoDataUrl && (
-                  <button
-                    onClick={() => setPhotoDataUrl(undefined)}
-                    className="text-xs text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200 font-medium"
-                  >
-                    Change
-                  </button>
-                )}
-              </div>
-              {!photoDataUrl ? (
-                <label
-                  className={cn(
-                    "relative flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed bg-muted/30 hover:bg-muted/50 hover:border-[var(--primary)]/50 transition-all group",
-                  )}
-                >
-                  <input
-                    id="photo"
-                    className="sr-only"
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={(e) => onFileChange(e.target.files?.[0])}
-                  />
-                  <div className="flex flex-col items-center gap-4 p-8 text-center">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center group-hover:scale-105 transition-transform">
-                        <svg
-                          className="w-8 h-8 text-[var(--primary)]"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            <div className="group relative flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-all duration-500 overflow-hidden">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--primary)]/3"></div>
+              <div
+                className="absolute inset-0 rounded-xl border border-[var(--primary)]/20 animate-pulse"
+                style={{ animationDuration: "3s" }}
+              ></div>
+              <div className="relative z-10 space-y-8">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="photo" className="text-base font-semibold">
+                      1. Photo Evidence
+                    </Label>
+                    {photoDataUrl && (
+                      <button
+                        onClick={() => setPhotoDataUrl(undefined)}
+                        className="text-xs text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200 font-medium"
+                      >
+                        Change
+                      </button>
+                    )}
+                  </div>
+                  {!photoDataUrl ? (
+                    <div className="space-y-4">
+                      <label
+                        className={cn(
+                          "relative flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed bg-muted/30 hover:bg-muted/50 hover:border-[var(--primary)]/50 transition-all group cursor-pointer",
+                        )}
+                      >
+                        <input
+                          className="sr-only"
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={(e) => onFileChange(e.target.files?.[0])}
+                        />
+                        <div className="flex flex-col items-center gap-4 p-8 text-center">
+                          <div className="relative">
+                            <div className="w-16 h-16 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <svg
+                                className="w-8 h-8 text-[var(--primary)]"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground mb-1">
+                              Upload or Capture Photo
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Clear image of the pothole
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                      <div className="flex gap-2 justify-center">
+                        <label className="cursor-pointer">
+                          <input
+                            className="sr-only"
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => onFileChange(e.target.files?.[0])}
                           />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                          <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                            <span>Camera</span>
+                          </div>
+                        </label>
+                        <span className="text-[var(--primary)]/60 flex items-center">
+                          •
+                        </span>
+                        <label className="cursor-pointer">
+                          <input
+                            className="sr-only"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => onFileChange(e.target.files?.[0])}
                           />
-                        </svg>
+                          <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <span>Gallery</span>
+                          </div>
+                        </label>
                       </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground mb-1">
-                        Upload or Capture Photo
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Clear image of the pothole
-                      </p>
+                  ) : (
+                    <div className="relative rounded-xl overflow-hidden border">
+                      <img
+                        alt="Pothole preview"
+                        src={photoDataUrl}
+                        className="aspect-video w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="h-px bg-border" />
+
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">
+                    2. Location Details
+                  </Label>
+                  <div className="space-y-3">
+                    <div className="rounded-xl border bg-muted/30 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5">
+                          {locLoading ? (
+                            <Spinner className="h-5 w-5 text-muted-foreground" />
+                          ) : coords ? (
+                            <svg
+                              className="w-5 h-5 text-[var(--primary)]"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                          ) : (
+                            <svg
+                              className="w-5 h-5 text-muted-foreground"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {locLoading || locationLoading ? (
+                            <p className="text-sm text-muted-foreground">
+                              Detecting your location...
+                            </p>
+                          ) : coords && locationDetails ? (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                {locationDetails.address?.road && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Street:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.road}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.house_number && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      House No:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.house_number}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.suburb && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Area:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.suburb}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.neighbourhood && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Neighborhood:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.neighbourhood}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.city_district && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Ward:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.city_district}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.postcode && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Pincode:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.postcode}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.city && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      City:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.city}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.state && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      State:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.state}
+                                    </span>
+                                  </div>
+                                )}
+                                {locationDetails.address?.country && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Country:
+                                    </span>
+                                    <span className="ml-1 font-medium">
+                                      {locationDetails.address.country}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {(locationDetails.address?.amenity ||
+                                locationDetails.address?.shop ||
+                                locationDetails.address?.tourism ||
+                                locationDetails.address?.leisure) && (
+                                <div className="pt-2 border-t border-border/50">
+                                  <div className="text-xs text-muted-foreground mb-1">
+                                    Nearby:
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {locationDetails.address?.amenity && (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-medium">
+                                        {locationDetails.address.amenity}
+                                      </span>
+                                    )}
+                                    {locationDetails.address?.shop && (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-medium">
+                                        {locationDetails.address.shop}
+                                      </span>
+                                    )}
+                                    {locationDetails.address?.tourism && (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-medium">
+                                        {locationDetails.address.tourism}
+                                      </span>
+                                    )}
+                                    {locationDetails.address?.leisure && (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-medium">
+                                        {locationDetails.address.leisure}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="text-xs text-muted-foreground pt-1 border-t border-border/30">
+                                <div className="flex justify-between">
+                                  <span>
+                                    Coordinates: {coords.lat.toFixed(5)},{" "}
+                                    {coords.lng.toFixed(5)}
+                                  </span>
+                                  <span>
+                                    Accuracy: ±
+                                    {Math.round((coords as any).accuracy || 0)}m
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : coords ? (
+                            <p className="text-sm font-medium">
+                              {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Location access required
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </label>
-              ) : (
-                <div className="relative rounded-xl overflow-hidden border">
-                  <img
-                    alt="Pothole preview"
-                    src={photoDataUrl}
-                    className="aspect-video w-full object-cover"
-                  />
                 </div>
-              )}
-            </div>
 
-            <div className="h-px bg-border" />
+                <div className="h-px bg-border" />
 
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">
-                2. Location Details
-              </Label>
-              <div className="space-y-3">
-                <div className="rounded-xl border bg-muted/30 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5">
-                      {locLoading ? (
-                        <Spinner className="h-5 w-5 text-muted-foreground" />
-                      ) : coords ? (
-                        <svg
-                          className="w-5 h-5 text-[var(--primary)]"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">
+                    3. Severity Assessment
+                  </Label>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center gap-3 py-2">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          aria-label={`Severity ${s}`}
+                          className={cn(
+                            "h-14 w-14 rounded-xl border-2 flex items-center justify-center font-bold text-lg transition-all duration-200",
+                            s === severity
+                              ? "bg-[var(--primary)] text-white border-[var(--primary)] shadow-lg scale-110"
+                              : "bg-background border-border hover:border-[var(--primary)]/50 hover:scale-105",
+                          )}
+                          onClick={() => setSeverity(s)}
                         >
-                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-5 h-5 text-muted-foreground"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                        </svg>
-                      )}
+                          {s}
+                        </button>
+                      ))}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      {locLoading ? (
-                        <p className="text-sm text-muted-foreground">
-                          Detecting your location...
-                        </p>
-                      ) : coords ? (
-                        <p className="text-sm font-medium">
-                          {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Location access required
-                        </p>
-                      )}
+                    <div className="flex justify-between text-xs text-muted-foreground px-2">
+                      <span>Minor Issue</span>
+                      <span>Critical Hazard</span>
                     </div>
                   </div>
                 </div>
-                <Input
-                  placeholder="Nearby landmark or street name (optional)"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="bg-background border-border focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-              </div>
-            </div>
 
-            <div className="h-px bg-border" />
+                <div className="h-px bg-border" />
 
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">
-                3. Severity Assessment
-              </Label>
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-3 py-2">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      aria-label={`Severity ${s}`}
-                      className={cn(
-                        "h-14 w-14 rounded-xl border-2 flex items-center justify-center font-bold text-lg transition-all duration-200",
-                        s === severity
-                          ? "bg-[var(--primary)] text-white border-[var(--primary)] shadow-lg scale-110"
-                          : "bg-background border-border hover:border-[var(--primary)]/50 hover:scale-105",
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsAdditionalDetailsExpanded(
+                        !isAdditionalDetailsExpanded,
+                      )
+                    }
+                    className="group w-full flex items-center justify-between text-left rounded-lg p-2 -m-2"
+                  >
+                    <Label className="text-base font-semibold cursor-pointer">
+                      4. Additional Details{" "}
+                      <span className="text-muted-foreground font-normal text-sm">
+                        (optional)
+                      </span>
+                    </Label>
+                    <div className="flex items-center justify-center w-6 h-6">
+                      {isAdditionalDetailsExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-[var(--primary)] transition-colors duration-200" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-[var(--primary)] transition-colors duration-200" />
                       )}
-                      onClick={() => setSeverity(s)}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                    </div>
+                  </button>
+
+                  <div
+                    className={cn(
+                      "overflow-hidden transition-all duration-300 ease-in-out",
+                      isAdditionalDetailsExpanded
+                        ? "max-h-96 opacity-100 mt-3"
+                        : "max-h-0 opacity-0 mt-0",
+                    )}
+                  >
+                    <Textarea
+                      id="description"
+                      placeholder="Any additional context that might help (size, depth, traffic impact, etc.)"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="bg-background border-border min-h-[100px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground px-2">
-                  <span>Minor Issue</span>
-                  <span>Critical Hazard</span>
+
+                <div className="pt-2">
+                  <Button
+                    size="lg"
+                    disabled={disabled || submitting}
+                    onClick={onSubmit}
+                    className="w-full h-12 text-base font-bold bg-[var(--primary)] hover:bg-[var(--primary)] disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Spinner className="h-4 w-4" />
+                        Submitting...
+                      </span>
+                    ) : (
+                      "Submit Report"
+                    )}
+                  </Button>
                 </div>
               </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div className="space-y-4">
-              <Label htmlFor="description" className="text-base font-semibold">
-                4. Additional Details{" "}
-                <span className="text-muted-foreground font-normal text-sm">
-                  (optional)
-                </span>
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Any additional context that might help (size, depth, traffic impact, etc.)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="bg-background border-border min-h-[100px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
-
-            <div className="pt-2">
-              <Button
-                size="lg"
-                disabled={disabled || submitting}
-                onClick={onSubmit}
-                className="w-full h-12 text-base font-bold bg-[var(--primary)] hover:bg-[var(--primary)] disabled:opacity-50"
-              >
-                {submitting ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner className="h-4 w-4" />
-                    Submitting...
-                  </span>
-                ) : (
-                  "Submit Report"
-                )}
-              </Button>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
 
       <Footer />
       <Toaster />

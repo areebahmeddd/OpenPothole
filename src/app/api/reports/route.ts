@@ -13,7 +13,6 @@ type Report = {
   verifications: { fixed: number; notFixed: number };
 };
 
-// Module-level store (ephemeral in preview)
 const globalAny = globalThis as any;
 if (!globalAny.__REPORTS__) {
   const now = Date.now();

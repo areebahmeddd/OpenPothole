@@ -15,13 +15,13 @@ export function Header() {
             </Link>
           </div>
 
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-3">
             <a
-              href="https://www.youtube.com/watch?v=nPmozZFyn9Q"
+              href="https://youtube.com/watch?v=nPmozZFyn9Q"
               target="_blank"
               rel="noreferrer"
               aria-label="YouTube"
-              className="text-muted-foreground hover:text-[var(--primary)] transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-[var(--primary)] transition-colors"
             >
               <Youtube className="h-5 w-5" />
             </a>
@@ -30,7 +30,7 @@ export function Header() {
               target="_blank"
               rel="noreferrer"
               aria-label="GitHub"
-              className="text-muted-foreground hover:text-[var(--primary)] transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-[var(--primary)] transition-colors"
             >
               <Github className="h-5 w-5" />
             </a>
