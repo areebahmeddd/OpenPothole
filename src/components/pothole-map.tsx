@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Types used by the component
 type Report = {
@@ -55,14 +55,62 @@ async function ensureLeafletLoaded(): Promise<any> {
   return window.L;
 }
 
-export default function PotholeMap({ reports }: { reports: Report[] }) {
+export default function PotholeMap({
+  reports,
+  requestLocation,
+}: {
+  reports: Report[];
+  requestLocation?: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const layerRef = useRef<any>(null);
+  const userLocationRef = useRef<any>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null,
+  );
+  const [locationError, setLocationError] = useState<string | null>(null);
 
-  const center: [number, number] = reports?.[0]
-    ? [reports[0].lat, reports[0].lng]
-    : [12.9716, 77.5946]; // Bengaluru
+  const defaultCenter: [number, number] = [12.9716, 77.5946]; // Bengaluru
+  const center: [number, number] =
+    userLocation ||
+    (reports?.[0] ? [reports[0].lat, reports[0].lng] : defaultCenter);
+
+  // Get user's current location
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation([latitude, longitude]);
+        setLocationError(null);
+      },
+      (error) => {
+        let errorMessage = "Unable to retrieve your location.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied by user.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+        setLocationError(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000, // 5 minutes
+      },
+    );
+  };
 
   // Initialize map and keep it alive; update markers when `reports` change.
   useEffect(() => {
@@ -90,6 +138,9 @@ export default function PotholeMap({ reports }: { reports: Report[] }) {
           attribution: "&copy; OpenStreetMap contributors",
           crossOrigin: true,
         }).addTo(mapRef.current);
+
+        // Get user location after map is initialized
+        getUserLocation();
       } else {
         mapRef.current.setView(center, mapRef.current.getZoom() || 12);
       }
@@ -101,12 +152,12 @@ export default function PotholeMap({ reports }: { reports: Report[] }) {
 
       const layer = L.layerGroup();
       reports?.forEach((r: Report) => {
-        // Map status → resolved color
+        // Map status → resolved color with proper hex values for consistent styling
         const statusColor =
           r.status === "new"
             ? colorDestructive
             : r.status === "acknowledged"
-              ? "oklch(0.83 0.17 90)" // keep simple literal, widely supported now
+              ? "#f59e0b" // amber/orange for in-progress
               : r.status === "fixed"
                 ? colorAccent
                 : colorPrimary;
@@ -118,25 +169,113 @@ export default function PotholeMap({ reports }: { reports: Report[] }) {
           iconAnchor: [9, 9],
         });
 
+        // Map status to display label
+        const statusLabel =
+          r.status === "new"
+            ? "New"
+            : r.status === "acknowledged"
+              ? "In Progress"
+              : r.status === "fixed"
+                ? "Fixed"
+                : r.status === "verified"
+                  ? "Verified"
+                  : r.status;
+
         const popupHtml = `
-          <div style="width:256px;max-width:256px">
-            <div style="border-radius:8px;overflow:hidden;border:1px solid ${colorBorder}">
-              <img alt="Reported pothole" src="${r.photoDataUrl || "/reported-pothole.jpg"}" style="display:block;width:100%;height:140px;object-fit:cover" />
-              <div style="padding:8px;font-size:12px;line-height:1.4;">
-                <div style="font-weight:600;">Severity: ${r.severity ?? 1}/5</div>
-                <div style="color:${colorMutedFg}">${r.address || "No address provided"}</div>
-                <div style="color:${colorMutedFg};font-size:11px">Status: ${r.status}</div>
-                <a href="/potholes/${r.id}" style="display:inline-flex;margin-top:8px;padding:6px 10px;border-radius:6px;background:${colorPrimary};color:${colorPrimaryFg};text-decoration:none;">View details</a>
+          <style>
+            .leaflet-popup-content-wrapper {
+              background: transparent !important;
+              padding: 0 !important;
+              box-shadow: none !important;
+            }
+            .leaflet-popup-tip {
+              display: none !important;
+            }
+            .leaflet-popup-close-button {
+              color: ${colorMutedFg} !important;
+              font-size: 20px !important;
+              padding: 8px 12px !important;
+              transition: color 0.15s ease !important;
+            }
+            .leaflet-popup-close-button:hover {
+              color: ${colorDestructive} !important;
+            }
+          </style>
+          <div style="width:280px;max-width:280px;">
+            <div style="border-radius:16px;overflow:hidden;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border:1px solid ${colorBorder};box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);">
+              <img alt="Reported pothole" src="${r.photoDataUrl || "/reported-pothole.jpg"}" style="display:block;width:100%;height:160px;object-fit:cover;" />
+              <div style="padding:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                  <div style="font-size:14px;font-weight:600;">Severity: ${r.severity ?? 1}/5</div>
+                  <div style="padding:6px 12px;border-radius:12px;background:${statusColor}10;color:${statusColor};font-size:12px;font-weight:600;border:1px solid ${statusColor}20;">${statusLabel}</div>
+                </div>
+                <div style="color:${colorMutedFg};font-size:13px;line-height:1.5;margin-bottom:14px;">${r.address || "Location not specified"}</div>
+                <a href="/potholes/${r.id}" style="display:block;text-align:center;padding:10px 16px;border-radius:12px;background:${colorPrimary};color:${colorPrimaryFg};text-decoration:none;font-size:13px;font-weight:600;transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">View details</a>
               </div>
             </div>
           </div>
         `;
 
-        L.marker([r.lat, r.lng], { icon }).addTo(layer).bindPopup(popupHtml);
+        L.marker([r.lat, r.lng], { icon }).addTo(layer).bindPopup(popupHtml, {
+          className: "custom-popup",
+          maxWidth: 300,
+          closeButton: true,
+        });
       });
 
       layer.addTo(mapRef.current);
       layerRef.current = layer;
+
+      // Add user location marker if available
+      if (userLocation && mapRef.current) {
+        // Remove existing user location marker
+        if (userLocationRef.current) {
+          mapRef.current.removeLayer(userLocationRef.current);
+        }
+
+        // Create user location marker with pulsing effect
+        const userIcon = L.divIcon({
+          html: `
+            <div style="
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background: #3b82f6;
+              border: 3px solid white;
+              box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+              animation: pulse 2s infinite;
+            ">
+            </div>
+            <style>
+              @keyframes pulse {
+                0% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); }
+                50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1); }
+                100% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); }
+              }
+            </style>
+          `,
+          className: "user-location-marker",
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+
+        userLocationRef.current = L.marker(userLocation, { icon: userIcon })
+          .addTo(mapRef.current)
+          .bindPopup(
+            `
+            <div style="text-align: center; padding: 8px;">
+              <div style="font-weight: 600; color: #3b82f6; margin-bottom: 4px;">📍 Your Location</div>
+              <div style="font-size: 12px; color: #6b7280;">Current position</div>
+            </div>
+          `,
+            {
+              className: "user-location-popup",
+              closeButton: false,
+              autoClose: false,
+              closeOnClick: false,
+            },
+          );
+      }
     }
 
     init();
@@ -144,12 +283,31 @@ export default function PotholeMap({ reports }: { reports: Report[] }) {
     return () => {
       cancelled = true;
     };
-  }, [reports, center]);
+  }, [reports, center, userLocation]);
+
+  // Handle user location changes
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+      // Center map on user location with a smooth transition
+      mapRef.current.setView(userLocation, 14, { animate: true, duration: 1 });
+    }
+  }, [userLocation]);
+
+  // Handle location request from button
+  useEffect(() => {
+    if (requestLocation) {
+      getUserLocation();
+    }
+  }, [requestLocation]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       try {
+        if (userLocationRef.current) {
+          userLocationRef.current.remove();
+          userLocationRef.current = null;
+        }
         if (layerRef.current) {
           layerRef.current.remove();
           layerRef.current = null;

@@ -1,4 +1,5 @@
-import { SiteNav } from "@/components/site-nav";
+import { Header } from "@/components/header";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
@@ -8,8 +9,8 @@ import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Open Pothole",
-  description: "Open Pothole - Report potholes in your area",
+  title: "OpenPothole",
+  description: "OpenPothole - Report potholes in your area",
 };
 
 export default function RootLayout({
@@ -18,15 +19,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
-        <Suspense fallback={null}>
-          <SiteNav />
-          {children}
-        </Suspense>
-        <Analytics />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+        >
+          <Suspense fallback={null}>
+            <Header />
+            {children}
+          </Suspense>
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { DotPattern } from "@/components/ui/dot-pattern";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,8 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { Navigation } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
 const PotholeMap = dynamic(() => import("@/components/pothole-map"), {
@@ -22,9 +24,21 @@ const PotholeMap = dynamic(() => import("@/components/pothole-map"), {
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function MapPage() {
-  const { data, isLoading } = useSWR("/api/reports", fetcher);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const { data, isLoading } = useSWR(
+    apiUrl ? `${apiUrl}/reports` : null,
+    fetcher,
+  );
   const [status, setStatus] = useState<string>("all");
   const [minSeverity, setMinSeverity] = useState<number>(1);
+  const [locationRequested, setLocationRequested] = useState<boolean>(false);
+
+  // Drag state for desktop filter box
+  const [position, setPosition] = useState({ x: 32, y: 0 }); // Default left-8 (32px) position
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragStartTime = useRef<number>(0);
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -35,52 +49,315 @@ export default function MapPage() {
     });
   }, [data, status, minSeverity]);
 
+  // Drag handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    if (dragRef.current) {
+      dragStartTime.current = Date.now();
+      const rect = dragRef.current.getBoundingClientRect();
+      // Calculate offset from where the user clicked within the element
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      // Add a small threshold to prevent accidental drags
+      const timeSinceStart = Date.now() - dragStartTime.current;
+      if (timeSinceStart < 50) return;
+
+      e.preventDefault();
+      // Calculate new position by subtracting the offset from the mouse position
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+
+      // Constrain to viewport bounds
+      const maxX = window.innerWidth - 384; // max-w-sm = 384px
+      const maxY = window.innerHeight - 64; // navbar height
+
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      });
+    },
+    [isDragging, dragOffset],
+  );
+
+  const handleMouseUp = useCallback((e: MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  // Add global mouse event listeners
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove, {
+        passive: false,
+      });
+      document.addEventListener("mouseup", handleMouseUp, { passive: false });
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   return (
-    <main className="min-h-dvh grid grid-cols-1 lg:grid-cols-[320px_1fr]">
-      <aside className="border-r bg-card/60 p-4 space-y-4">
-        <h1 className="text-xl font-semibold">Pothole Map</h1>
-        <Card className="shadow-sm">
-          <CardContent className="p-4 space-y-3">
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="acknowledged">Acknowledged</SelectItem>
-                  <SelectItem value="fixed">Fixed (pending)</SelectItem>
-                  <SelectItem value="verified">Verified ✅</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Min severity</Label>
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                value={minSeverity}
-                onChange={(e) => setMinSeverity(Number(e.target.value || 1))}
-              />
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Tap markers to view photo and details.
-            </div>
-          </CardContent>
-        </Card>
-      </aside>
-      <section className="relative">
+    <main className="h-[calc(100vh-4rem)] relative bg-background overflow-hidden">
+      <DotPattern
+        className={cn(
+          "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+        )}
+      />
+
+      {/* Map as background with rounded top corners */}
+      <section className="absolute inset-0 z-0 rounded-t-3xl overflow-hidden">
         {isLoading ? (
-          <div className="p-4">
-            <Skeleton className="h-[70dvh] w-full" />
+          <div className="h-full flex items-center justify-center p-8">
+            <div className="text-center space-y-4">
+              <Skeleton className="h-full w-full" />
+              <p className="text-sm text-muted-foreground">
+                Loading map data...
+              </p>
+            </div>
           </div>
         ) : (
-          <PotholeMap reports={filtered} />
+          <PotholeMap reports={filtered} requestLocation={locationRequested} />
         )}
       </section>
+
+      {/* Location Button */}
+      <div className="absolute top-4 right-4 z-20 pointer-events-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:shadow-xl transition-all duration-200"
+          onClick={() => {
+            setLocationRequested(true);
+            // Force re-render of map component to request location
+            setTimeout(() => setLocationRequested(false), 100);
+          }}
+        >
+          <Navigation className="h-4 w-4 mr-2" />
+          My Location
+        </Button>
+      </div>
+
+      {/* Floating Filter Card */}
+      <div className="relative z-10 pointer-events-none h-full">
+        {/* Desktop: Draggable positioned */}
+        <div
+          className="hidden lg:flex absolute pointer-events-auto"
+          style={{
+            left: position.x,
+            top: position.y === 0 ? "50%" : position.y,
+            transform: position.y === 0 ? "translateY(-50%)" : "none",
+          }}
+        >
+          <div className="max-w-sm" ref={dragRef}>
+            <div
+              className={cn(
+                "rounded-2xl border bg-card/95 backdrop-blur-md shadow-xl p-6 space-y-6",
+                isDragging
+                  ? "select-none"
+                  : "hover:shadow-xl transition-shadow duration-200",
+              )}
+            >
+              {/* Drag Handle */}
+              <div
+                className="flex items-center justify-center w-full h-4 cursor-move hover:bg-muted/30 rounded-md transition-colors duration-150 select-none"
+                onMouseDown={handleMouseDown}
+                style={{ touchAction: "none" }}
+              >
+                <div className="flex space-x-1">
+                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                  <div className="w-1 h-1 bg-muted-foreground/30 rounded-full"></div>
+                </div>
+              </div>
+
+              {/* Header */}
+              <div className="space-y-2 pb-4 border-b">
+                <h1 className="text-2xl font-bold tracking-tight">
+                  Pothole Map
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    {filtered.length}
+                  </span>{" "}
+                  {filtered.length === 1 ? "report" : "reports"}
+                </p>
+              </div>
+
+              {/* Filters */}
+              <div className="space-y-5">
+                {/* Status Filter */}
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-semibold">Status Filter</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="w-full h-10 bg-background/50 border-border">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="acknowledged">In Progress</SelectItem>
+                      <SelectItem value="fixed">Fixed</SelectItem>
+                      <SelectItem value="verified">Verified</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Severity Filter */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">
+                    Severity Level
+                  </Label>
+                  <div className="flex items-center justify-between gap-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        aria-label={`Severity ${s}`}
+                        className={cn(
+                          "h-11 w-11 rounded-xl border-2 flex items-center justify-center font-bold text-base transition-all duration-200",
+                          s === minSeverity
+                            ? "bg-[var(--primary)] text-white border-[var(--primary)] shadow-md scale-105"
+                            : "bg-background/50 border-border hover:border-[var(--primary)]/50 hover:scale-105",
+                        )}
+                        onClick={() => setMinSeverity(s)}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Minor</span>
+                    <span>Critical</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="flex items-start gap-2 text-muted-foreground pt-4 border-t">
+                <svg
+                  className="w-4 h-4 mt-0.5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="text-[11px] leading-relaxed">
+                  Click markers to view report details
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile: Bottom sheet */}
+        <div className="lg:hidden absolute bottom-0 left-0 right-0 pointer-events-auto max-h-[60vh] overflow-y-auto">
+          <div className="rounded-t-3xl border-t border-l border-r bg-card/98 backdrop-blur-md shadow-2xl p-5 space-y-5 pb-8">
+            {/* Header */}
+            <div className="space-y-2">
+              <h1 className="text-xl font-bold tracking-tight">Pothole Map</h1>
+              <p className="text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                  {filtered.length}
+                </span>{" "}
+                {filtered.length === 1 ? "report" : "reports"}
+              </p>
+            </div>
+
+            {/* Filters - Horizontal Layout */}
+            <div className="space-y-4">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-full h-10 bg-background/50 border-border text-sm">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="acknowledged">In Progress</SelectItem>
+                    <SelectItem value="fixed">Fixed</SelectItem>
+                    <SelectItem value="verified">Verified</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Severity Filter - Compact */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Severity Level</Label>
+                <div className="flex items-center justify-between gap-2">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      aria-label={`Severity ${s}`}
+                      className={cn(
+                        "h-10 w-10 rounded-lg border-2 flex items-center justify-center font-bold text-sm transition-all duration-200",
+                        s === minSeverity
+                          ? "bg-[var(--primary)] text-white border-[var(--primary)] shadow-md"
+                          : "bg-background/50 border-border active:scale-95",
+                      )}
+                      onClick={() => setMinSeverity(s)}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground pt-1">
+                  <span>Minor</span>
+                  <span>Critical</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="flex items-start gap-2 text-muted-foreground pt-2">
+              <svg
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-[10px] leading-relaxed">
+                Click markers to view report details
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
