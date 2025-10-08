@@ -1,0 +1,27 @@
+# LLMs.txt for pothole.openindia.org
+
+## Website Overview
+OpenPothole is a community-driven civic engagement platform that enables citizens to report potholes and verify repairs in Bangalore, India. Built on Open311 API standards for transparent and accessible civic engagement.
+
+## Site Structure
+- Home Page (`/`): Main landing page with project overview and statistics
+- Map Page (`/map`): Interactive map showing reported potholes and their status
+- Report Page (`/report`): Form for citizens to submit new pothole reports
+- Potholes Page (`/potholes`): Individual pothole detail pages
+
+## Key Features
+- Anonymous pothole reporting with geotagged photos
+- Real-time tracking of report status
+- Community verification of repairs
+- Open311 API integration for government transparency
+- No login required for citizen participation
+- Interactive map visualization
+- Real-time statistics dashboard
+
+## Contact Information
+- GitHub: https://github.com/areebahmeddd/OpenPothole
+- YouTube: https://www.youtube.com/watch?v=nPmozZFyn9Q
+- Organization: Open India Initiative
+
+## License
+MIT License
