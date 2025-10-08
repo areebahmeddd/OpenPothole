@@ -9,7 +9,7 @@ export function Header() {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link href="/" className="flex items-center group">
-              <span className="font-bold text-xl text-foreground group-hover:text-[var(--primary)] transition-colors duration-200">
+              <span className="font-bold text-xl text-foreground group-hover:text-[var(--primary)] transition-all duration-300 group-hover:scale-105">
                 OpenPothole
               </span>
             </Link>
@@ -21,7 +21,7 @@ export function Header() {
               target="_blank"
               rel="noreferrer"
               aria-label="YouTube"
-              className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-[var(--primary)] transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-[var(--primary)] transition-all duration-300 hover:scale-110"
             >
               <Youtube className="h-5 w-5" />
             </a>
@@ -30,7 +30,7 @@ export function Header() {
               target="_blank"
               rel="noreferrer"
               aria-label="GitHub"
-              className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-[var(--primary)] transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-[var(--primary)] transition-all duration-300 hover:scale-110"
             >
               <Github className="h-5 w-5" />
             </a>

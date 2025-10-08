@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 type Report = {
   id: string;
-  photoDataUrl?: string;
+  photos?: string[];
   lat: number;
   lng: number;
   address?: string;
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   const id = `BLR-${Math.floor(1000 + Math.random() * 9000)}`;
   const report: Report = {
     id,
-    photoDataUrl: body.photoDataUrl,
+    photos: body.photos || [],
     lat: Number(body.lat),
     lng: Number(body.lng),
     address: body.address || "",

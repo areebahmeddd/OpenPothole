@@ -22,7 +22,7 @@ export default function ReportPage() {
   const { mutate } = useSWRConfig();
   const { toast } = useToast();
 
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>();
+  const [photos, setPhotos] = useState<string[]>([]);
   const [locLoading, setLocLoading] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
@@ -176,16 +176,32 @@ export default function ReportPage() {
     }
   }, [coords]);
 
-  const onFileChange = async (file?: File) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setPhotoDataUrl(reader.result as string);
-    reader.readAsDataURL(file);
+  const onFileChange = async (files?: FileList | null) => {
+    if (!files) return;
+    const newPhotos: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          newPhotos.push(reader.result as string);
+          if (newPhotos.length === files.length) {
+            setPhotos((prev) => [...prev, ...newPhotos]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const disabled = useMemo(
-    () => !photoDataUrl || !coords,
-    [photoDataUrl, coords],
+    () => photos.length === 0 || !coords,
+    [photos, coords],
   );
 
   const onSubmit = async () => {
@@ -195,7 +211,7 @@ export default function ReportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          photoDataUrl,
+          photos,
           lat: coords?.lat,
           lng: coords?.lng,
           description,
@@ -207,11 +223,6 @@ export default function ReportPage() {
         setSuccessId(json.id);
         mutate("/api/reports");
         mutate("/api/reports/stats");
-        toast({
-          title: "Report Submitted Successfully",
-          description:
-            "Your pothole report has been recorded and will be reviewed.",
-        });
       } else {
         toast({
           title: "Submission Failed",
@@ -243,7 +254,7 @@ export default function ReportPage() {
         <main className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
           <div className="max-w-2xl mx-auto text-center space-y-8">
             <div className="space-y-4">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 text-green-600 dark:text-green-500 mb-4">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 text-green-600 dark:text-green-500 mb-4 animate-fade-in-up">
                 <svg
                   className="w-10 h-10"
                   fill="none"
@@ -258,15 +269,15 @@ export default function ReportPage() {
                   />
                 </svg>
               </div>
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight animate-fade-in-up animate-delay-100">
                 Report Submitted!
               </h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-muted-foreground animate-fade-in-up animate-delay-200">
                 Thank you for helping improve Bengaluru&apos;s roads.
               </p>
             </div>
 
-            <div className="group relative flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-all duration-500 overflow-hidden">
+            <div className="group relative flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-all duration-500 overflow-hidden animate-fade-in-up animate-delay-300">
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--primary)]/3"></div>
               <div
                 className="absolute inset-0 rounded-xl border border-[var(--primary)]/20 animate-pulse"
@@ -285,11 +296,11 @@ export default function ReportPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animate-delay-400">
               <Button
                 asChild
                 size="lg"
-                className="bg-[var(--primary)] hover:bg-[var(--primary)]"
+                className="bg-[var(--primary)] hover:bg-[var(--primary)] transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
                 <Link href={`/potholes/${successId}`}>View Report</Link>
               </Button>
@@ -297,11 +308,16 @@ export default function ReportPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="hover:bg-background hover:border-border"
+                className="hover:bg-background hover:border-border transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
                 <Link href="/map">View Map</Link>
               </Button>
-              <Button asChild size="lg" variant="ghost">
+              <Button
+                asChild
+                size="lg"
+                variant="ghost"
+                className="transition-all duration-300 hover:scale-105"
+              >
                 <Link href="/" className="inline-flex items-center gap-2">
                   <ArrowRight className="h-4 w-4" />
                   Go Home
@@ -310,12 +326,12 @@ export default function ReportPage() {
             </div>
 
             {stats && (
-              <div className="pt-4 text-center">
+              <div className="pt-4 text-center animate-fade-in-up animate-delay-500">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-sm font-medium">
                   <div className="w-2 h-2 bg-[var(--primary)] rounded-full animate-pulse"></div>
                   <span>
                     You&apos;re one of {stats.total.toLocaleString()} citizens
-                    making a difference
+                    making a difference!
                   </span>
                 </div>
               </div>
@@ -336,16 +352,16 @@ export default function ReportPage() {
         <main className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
           <div className="max-w-2xl mx-auto w-full space-y-12">
             <div className="text-center space-y-3">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight animate-fade-in-up">
                 Report a Pothole
               </h1>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto animate-fade-in-up animate-delay-100">
                 Help improve Bengaluru&apos;s roads. Quick, anonymous, and
                 impactful.
               </p>
             </div>
 
-            <div className="group relative flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-all duration-500 overflow-hidden">
+            <div className="group relative flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-all duration-500 overflow-hidden animate-fade-in-up animate-delay-200">
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--primary)]/3"></div>
               <div
                 className="absolute inset-0 rounded-xl border border-[var(--primary)]/20 animate-pulse"
@@ -357,16 +373,16 @@ export default function ReportPage() {
                     <Label htmlFor="photo" className="text-base font-semibold">
                       1. Photo Evidence
                     </Label>
-                    {photoDataUrl && (
+                    {photos.length > 0 && (
                       <button
-                        onClick={() => setPhotoDataUrl(undefined)}
+                        onClick={() => setPhotos([])}
                         className="text-xs text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200 font-medium"
                       >
-                        Change
+                        Clear All
                       </button>
                     )}
                   </div>
-                  {!photoDataUrl ? (
+                  {photos.length === 0 ? (
                     <div className="space-y-4">
                       <label
                         className={cn(
@@ -378,7 +394,8 @@ export default function ReportPage() {
                           type="file"
                           accept="image/*"
                           capture="environment"
-                          onChange={(e) => onFileChange(e.target.files?.[0])}
+                          multiple
+                          onChange={(e) => onFileChange(e.target.files)}
                         />
                         <div className="flex flex-col items-center gap-4 p-8 text-center">
                           <div className="relative">
@@ -406,10 +423,10 @@ export default function ReportPage() {
                           </div>
                           <div>
                             <p className="font-medium text-foreground mb-1">
-                              Upload or Capture Photo
+                              Upload or Capture Photos
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Clear image of the pothole
+                              Clear images of the pothole
                             </p>
                           </div>
                         </div>
@@ -421,7 +438,8 @@ export default function ReportPage() {
                             type="file"
                             accept="image/*"
                             capture="environment"
-                            onChange={(e) => onFileChange(e.target.files?.[0])}
+                            multiple
+                            onChange={(e) => onFileChange(e.target.files)}
                           />
                           <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200">
                             <svg
@@ -454,7 +472,8 @@ export default function ReportPage() {
                             className="sr-only"
                             type="file"
                             accept="image/*"
-                            onChange={(e) => onFileChange(e.target.files?.[0])}
+                            multiple
+                            onChange={(e) => onFileChange(e.target.files)}
                           />
                           <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200">
                             <svg
@@ -476,12 +495,69 @@ export default function ReportPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="relative rounded-xl overflow-hidden border">
-                      <img
-                        alt="Pothole preview"
-                        src={photoDataUrl}
-                        className="aspect-video w-full object-cover"
-                      />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {photos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <div className="relative rounded-xl overflow-hidden border">
+                              <img
+                                alt={`Pothole photo ${index + 1}`}
+                                src={photo}
+                                className="aspect-video w-full object-cover"
+                              />
+                              <button
+                                onClick={() => removePhoto(index)}
+                                className="absolute top-2 right-2 w-6 h-6 text-muted-foreground hover:text-[var(--primary)] flex items-center justify-center transition-colors duration-200"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">
+                          {photos.length} photo{photos.length !== 1 ? "s" : ""}{" "}
+                          uploaded
+                        </p>
+                        {photos.length < 5 && (
+                          <label className="inline-flex items-center gap-2 mt-2 text-sm text-[var(--primary)] hover:text-[var(--primary)]/80 transition-colors cursor-pointer">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            Add more photos
+                            <input
+                              className="sr-only"
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => onFileChange(e.target.files)}
+                            />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -687,7 +763,7 @@ export default function ReportPage() {
                         >
                           <MapPin className="w-4 h-4" />
                           <span>
-                            {isPinOnMapOpen ? "Hide map" : "Pinpoint on map"}
+                            {isPinOnMapOpen ? "Hide map" : "Show map"}
                           </span>
                         </button>
                       </div>
@@ -700,8 +776,8 @@ export default function ReportPage() {
                           aria-label="Choose pothole location on map"
                         />
                         <div className="p-3 text-xs text-muted-foreground border-t bg-muted/20">
-                          Click to place a marker, or drag it to refine the
-                          exact spot.
+                          Click to place a marker, then drag it to adjust the
+                          location.
                         </div>
                       </div>
                     )}
@@ -790,7 +866,7 @@ export default function ReportPage() {
                     size="lg"
                     disabled={disabled || submitting}
                     onClick={onSubmit}
-                    className="w-full h-12 text-base font-bold bg-[var(--primary)] hover:bg-[var(--primary)] disabled:opacity-50"
+                    className="w-full h-12 text-base font-bold bg-[var(--primary)] hover:bg-[var(--primary)] disabled:opacity-50 transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
                     {submitting ? (
                       <span className="inline-flex items-center gap-2">

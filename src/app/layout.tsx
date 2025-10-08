@@ -1,4 +1,5 @@
 import { Header } from "@/components/header";
+import PageTransition from "@/components/PageTransition";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
@@ -33,7 +34,7 @@ export default function RootLayout({
         >
           <Suspense fallback={null}>
             <Header />
-            {children}
+            <PageTransition>{children}</PageTransition>
           </Suspense>
           <Analytics />
         </ThemeProvider>

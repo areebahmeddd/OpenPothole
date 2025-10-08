@@ -26,30 +26,32 @@ export default async function HomePage() {
           <div className="max-w-7xl mx-auto w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
               <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                <h1 className="text-5xl sm:text-6xl font-bold tracking-tight bg-gradient-to-r from-[#8b5e3c] via-[#734a2e] to-[#8b5e3c] bg-clip-text text-transparent">
+                <h1 className="text-5xl sm:text-6xl font-bold tracking-tight bg-gradient-to-r from-[#8b5e3c] via-[#734a2e] to-[#8b5e3c] bg-clip-text text-transparent animate-fade-in-up">
                   OpenPothole
                 </h1>
-                <p className="text-sm text-muted-foreground/70 mt-2 font-medium">
+                <p className="text-sm text-muted-foreground/70 mt-2 font-medium animate-fade-in-up animate-delay-100">
                   by Open India Initiative
                 </p>
-                <MorphingText
-                  texts={[
-                    "Community-Driven Civic Action",
-                    "ಸಮುದಾಯ-ಚಾಲಿತ ನಾಗರಿಕ ಕ್ರಿಯೆ",
-                    "समुदाय-संचालित नागरिक कार्य",
-                  ]}
-                  className="text-muted-foreground mt-4"
-                />
-                <p className="mt-6 text-lg text-muted-foreground">
+                <div className="animate-fade-in-up animate-delay-200">
+                  <MorphingText
+                    texts={[
+                      "Community-Driven Civic Action",
+                      "ಸಮುದಾಯ-ಚಾಲಿತ ನಾಗರಿಕ ಕ್ರಿಯೆ",
+                      "समुदाय-संचालित नागरिक कार्य",
+                    ]}
+                    className="text-muted-foreground mt-4"
+                  />
+                </div>
+                <p className="mt-6 text-lg text-muted-foreground animate-fade-in-up animate-delay-300">
                   Fast, <span className="font-bold">anonymous</span> pothole
                   tracking for Bangalore. Report issues, track fixes, and verify
                   repairs as a community.{" "}
                 </p>
-                <div className="mt-8 flex flex-wrap gap-4">
+                <div className="mt-8 flex flex-wrap gap-4 animate-fade-in-up animate-delay-400">
                   <Button
                     asChild
                     size="lg"
-                    className="font-bold px-8 bg-[var(--primary)] hover:bg-[var(--primary)]"
+                    className="font-bold px-8 bg-[var(--primary)] hover:bg-[var(--primary)] transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   >
                     <Link href="/report" className="flex items-center gap-2">
                       <Plus className="h-5 w-5" />
@@ -60,7 +62,7 @@ export default async function HomePage() {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="font-bold hover:bg-transparent"
+                    className="font-bold hover:bg-transparent transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   >
                     <Link href="/map" className="flex items-center gap-2">
                       <MapPin className="h-5 w-5" />
@@ -69,8 +71,8 @@ export default async function HomePage() {
                   </Button>
                 </div>
               </div>
-              <div className="flex justify-center relative">
-                <div className="relative w-64 h-64 sm:w-96 sm:h-96">
+              <div className="flex justify-center relative animate-fade-in-up animate-delay-500">
+                <div className="relative w-64 h-64 sm:w-96 sm:h-96 animate-float">
                   <div
                     className="absolute inset-0 bg-stone-100 dark:bg-stone-800/20 rounded-full animate-pulse"
                     style={{ animationDuration: "3s" }}
@@ -86,7 +88,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-6 animate-fade-in-up animate-delay-600">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-sm font-medium">
                 <div className="w-2 h-2 bg-[var(--primary)] rounded-full smooth-pulse"></div>
                 Real-time data
@@ -94,22 +96,28 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatsCard
-                label="Potholes Reported"
-                value={stats.total || 0}
-                animationDelay={0}
-              />
-              <StatsCard
-                label="Potholes Fixed"
-                value={stats.fixed || 0}
-                animationDelay={200}
-              />
-              <StatsCard
-                label="Resolution Rate"
-                value={Math.round((stats.rate || 0) * 10) / 10}
-                suffix="%"
-                animationDelay={400}
-              />
+              <div className="animate-fade-in-up animate-delay-700">
+                <StatsCard
+                  label="Potholes Reported"
+                  value={stats.total || 0}
+                  animationDelay={0}
+                />
+              </div>
+              <div className="animate-fade-in-up animate-delay-800">
+                <StatsCard
+                  label="Potholes Fixed"
+                  value={stats.fixed || 0}
+                  animationDelay={200}
+                />
+              </div>
+              <div className="animate-fade-in-up animate-delay-900">
+                <StatsCard
+                  label="Resolution Rate"
+                  value={Math.round((stats.rate || 0) * 10) / 10}
+                  suffix="%"
+                  animationDelay={400}
+                />
+              </div>
             </div>
           </div>
         </section>

@@ -127,11 +127,11 @@ export default function MapPage() {
         )}
       </section>
 
-      <div className="absolute top-4 right-4 z-20 pointer-events-auto">
+      <div className="absolute top-4 right-4 z-20 pointer-events-auto animate-fade-in-up animate-delay-100">
         <Button
           variant="outline"
           size="sm"
-          className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:bg-background/95"
+          className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:bg-background/95 transition-all duration-300 hover:scale-105 hover:shadow-xl"
           onClick={() => {
             setLocationRequested(true);
             setTimeout(() => setLocationRequested(false), 100);
@@ -144,7 +144,7 @@ export default function MapPage() {
 
       <div className="relative z-10 pointer-events-none h-full">
         <div
-          className="hidden lg:flex absolute pointer-events-auto"
+          className="hidden lg:flex absolute pointer-events-auto animate-fade-in-up animate-delay-200"
           style={{
             left: position.x,
             top: position.y === 0 ? "50%" : position.y,
@@ -287,7 +287,7 @@ export default function MapPage() {
           </div>
         </div>
 
-        <div className="lg:hidden absolute bottom-0 left-0 right-0 pointer-events-auto max-h-[60vh] overflow-y-auto">
+        <div className="lg:hidden absolute bottom-0 left-0 right-0 pointer-events-auto max-h-[60vh] overflow-y-auto animate-fade-in-up animate-delay-200">
           <div
             className={cn(
               "group relative flex flex-col justify-between rounded-t-3xl border-t border-l border-r bg-background/85 backdrop-blur-md shadow-xl hover:border-[var(--primary)]/50 transition-all duration-300 overflow-hidden",
