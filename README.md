@@ -1,6 +1,6 @@
 # 🧠 Project Description
 
-**OpenPothole** (A project under Open India Initiative) is a minimalist, community-driven pothole reporting platform for Bangalore, inspired by the [Open311 standard](https://www.open311.org). It enables anyone to report potholes without login, see them on a public map, and verify fixes through community participation. The goal is radical transparency, mobile-first UX, and Gen‑Z friendly design.
+**OpenPothole** (A project under Open India Initiative) is a minimalist, community-driven pothole reporting platform for Bangalore, inspired by the [Open311 standard](https://www.open311.org). It enables anyone to report potholes without login, see them on a public map, and verify fixes through community participation. The goal is radical transparency, mobile-first UX, and Gen‑Z friendly design. [ [Project Demo](https://www.youtube.com/watch?v=nPmozZFyn9Q) ]
 
 Built with Next.js + TypeScript, Tailwind, Leaflet/OpenStreetMap, and Firestore.
 
@@ -41,7 +41,7 @@ Built with Next.js + TypeScript, Tailwind, Leaflet/OpenStreetMap, and Firestore.
 1. Environment variables (create `.env`)
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
 2. Install dependencies
