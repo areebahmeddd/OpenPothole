@@ -194,11 +194,11 @@ export default async function HomePage() {
                 <div className="flex justify-center items-center px-16">
                   <div className="flex-1 h-0.5 bg-[var(--primary)]/20"></div>
                   <div className="w-8 h-8 rounded-full bg-background border-2 border-[var(--primary)]/20 flex items-center justify-center mx-4">
-                    <div className="w-2 h-2 rounded-full bg-[var(--primary)]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--primary)] smooth-pulse"></div>
                   </div>
                   <div className="flex-1 h-0.5 bg-[var(--primary)]/20"></div>
                   <div className="w-8 h-8 rounded-full bg-background border-2 border-[var(--primary)]/20 flex items-center justify-center mx-4">
-                    <div className="w-2 h-2 rounded-full bg-[var(--primary)]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--primary)] smooth-pulse"></div>
                   </div>
                   <div className="flex-1 h-0.5 bg-[var(--primary)]/20"></div>
                 </div>

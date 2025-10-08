@@ -9,10 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -35,6 +35,10 @@ export default function ReportPage() {
     useState(false);
   const [locationDetails, setLocationDetails] = useState<any>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [isPinOnMapOpen, setIsPinOnMapOpen] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const pinMapRef = useRef<any>(null);
+  const pinMarkerRef = useRef<any>(null);
 
   const { data: stats } = useSWR("/api/reports/stats", fetcher);
 
@@ -72,6 +76,105 @@ export default function ReportPage() {
       setLocLoading(false);
     }
   }, []);
+
+  const ensureLeafletLoaded = async (): Promise<any> => {
+    if (typeof window === "undefined") return;
+    if ((window as any).L) return (window as any).L;
+
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      link.crossOrigin = "anonymous";
+      document.head.appendChild(link);
+    }
+
+    if (!document.getElementById("leaflet-js")) {
+      const script = document.createElement("script");
+      script.id = "leaflet-js";
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      const loaded = new Promise<void>((resolve, reject) => {
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load Leaflet"));
+      });
+      document.body.appendChild(script);
+      await loaded;
+    }
+
+    return (window as any).L;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    async function initPinMap() {
+      if (!isPinOnMapOpen) return;
+      const L = await ensureLeafletLoaded();
+      if (cancelled || !mapContainerRef.current || !L) return;
+
+      const lat = coords?.lat ?? 12.9716;
+      const lng = coords?.lng ?? 77.5946;
+
+      if (!pinMapRef.current) {
+        pinMapRef.current = L.map(mapContainerRef.current).setView(
+          [lat, lng],
+          14,
+        );
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+          crossOrigin: true,
+        }).addTo(pinMapRef.current);
+
+        pinMapRef.current.on("click", (e: any) => {
+          const { lat: clat, lng: clng } = e.latlng;
+          setCoords({ lat: clat, lng: clng } as any);
+          if (pinMarkerRef.current) {
+            pinMarkerRef.current.setLatLng([clat, clng]);
+          } else {
+            pinMarkerRef.current = L.marker([clat, clng], {
+              draggable: true,
+            }).addTo(pinMapRef.current);
+            pinMarkerRef.current.on("dragend", () => {
+              const p = pinMarkerRef.current.getLatLng();
+              setCoords({ lat: p.lat, lng: p.lng } as any);
+            });
+          }
+        });
+      } else {
+        pinMapRef.current.setView(
+          [lat, lng],
+          pinMapRef.current.getZoom() || 14,
+        );
+      }
+
+      if (coords) {
+        if (pinMarkerRef.current) {
+          pinMarkerRef.current.setLatLng([coords.lat, coords.lng]);
+        } else {
+          pinMarkerRef.current = L.marker([coords.lat, coords.lng], {
+            draggable: true,
+          }).addTo(pinMapRef.current);
+          pinMarkerRef.current.on("dragend", () => {
+            const p = pinMarkerRef.current.getLatLng();
+            setCoords({ lat: p.lat, lng: p.lng } as any);
+          });
+        }
+      }
+    }
+
+    initPinMap();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPinOnMapOpen, coords]);
+
+  useEffect(() => {
+    if (coords) {
+      fetchLocationDetails(coords.lat, coords.lng);
+    }
+  }, [coords]);
 
   const onFileChange = async (file?: File) => {
     if (!file) return;
@@ -571,6 +674,37 @@ export default function ReportPage() {
                         </div>
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground text-center">
+                        Prefer exact placement? Pinpoint the pothole on the map.
+                      </div>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setIsPinOnMapOpen((v) => !v)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-[var(--primary)] transition-colors duration-200"
+                          aria-expanded={isPinOnMapOpen}
+                        >
+                          <MapPin className="w-4 h-4" />
+                          <span>
+                            {isPinOnMapOpen ? "Hide map" : "Pinpoint on map"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    {isPinOnMapOpen && (
+                      <div className="overflow-hidden rounded-xl border">
+                        <div
+                          ref={mapContainerRef}
+                          style={{ width: "100%", height: 320 }}
+                          aria-label="Choose pothole location on map"
+                        />
+                        <div className="p-3 text-xs text-muted-foreground border-t bg-muted/20">
+                          Click to place a marker, or drag it to refine the
+                          exact spot.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
