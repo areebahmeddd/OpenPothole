@@ -759,11 +759,13 @@ export default function ReportPage() {
                         placeholder="Search for a location..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm bg-background border border-border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[var(--primary)]/30 transition-colors resize-none min-h-[40px] max-h-32 overflow-y-auto"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm bg-background border border-border rounded-lg focus-visible:border-ring focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors resize-none min-h-[40px] max-h-32 overflow-y-auto"
                         rows={1}
-                        style={{
-                          fieldSizing: "content",
-                        }}
+                        style={
+                          {
+                            fieldSizing: "content",
+                          } as React.CSSProperties
+                        }
                       />
                       {isSearching ? (
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -773,10 +775,10 @@ export default function ReportPage() {
                         searchQuery && (
                           <button
                             onClick={clearLocationSearch}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-muted/50 rounded-r-lg transition-colors"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center rounded-r-lg group"
                             title="Clear search and use GPS location"
                           >
-                            <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                            <X className="h-4 w-4 text-muted-foreground group-hover:text-[var(--primary)] transition-colors duration-200" />
                           </button>
                         )
                       )}
