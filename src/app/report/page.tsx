@@ -2,11 +2,13 @@
 
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { DotPattern } from "@/components/ui/dot-pattern";
+import { DotPattern } from "@/components/ui/DotPattern";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,6 +20,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function ReportPage() {
   const router = useRouter();
   const { mutate } = useSWRConfig();
+  const { toast } = useToast();
 
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>();
   const [locLoading, setLocLoading] = useState(false);
@@ -80,7 +83,26 @@ export default function ReportPage() {
         setSuccessId(json.id);
         mutate("/api/reports");
         mutate("/api/reports/stats");
+        toast({
+          title: "Report Submitted Successfully",
+          description:
+            "Your pothole report has been recorded and will be reviewed.",
+        });
+      } else {
+        toast({
+          title: "Submission Failed",
+          description:
+            "There was an error submitting your report. Please try again.",
+          variant: "destructive",
+        });
       }
+    } catch (error) {
+      toast({
+        title: "Submission Failed",
+        description:
+          "There was an error submitting your report. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -155,6 +177,7 @@ export default function ReportPage() {
           </div>
         </main>
         <Footer />
+        <Toaster />
       </div>
     );
   }
@@ -169,7 +192,6 @@ export default function ReportPage() {
 
       <main className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
         <div className="max-w-2xl mx-auto w-full space-y-12">
-          {/* Header - Centered */}
           <div className="text-center space-y-3">
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
               Report a Pothole
@@ -180,9 +202,7 @@ export default function ReportPage() {
             </p>
           </div>
 
-          {/* Form Card */}
           <div className="rounded-2xl border bg-card/50 backdrop-blur-sm p-8 sm:p-10 space-y-8">
-            {/* Photo Upload */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label htmlFor="photo" className="text-base font-semibold">
@@ -247,7 +267,6 @@ export default function ReportPage() {
                 </label>
               ) : (
                 <div className="relative rounded-xl overflow-hidden border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     alt="Pothole preview"
                     src={photoDataUrl}
@@ -259,7 +278,6 @@ export default function ReportPage() {
 
             <div className="h-px bg-border" />
 
-            {/* Location */}
             <div className="space-y-4">
               <Label className="text-base font-semibold">
                 2. Location Details
@@ -316,7 +334,6 @@ export default function ReportPage() {
 
             <div className="h-px bg-border" />
 
-            {/* Severity */}
             <div className="space-y-4">
               <Label className="text-base font-semibold">
                 3. Severity Assessment
@@ -349,7 +366,6 @@ export default function ReportPage() {
 
             <div className="h-px bg-border" />
 
-            {/* Description */}
             <div className="space-y-4">
               <Label htmlFor="description" className="text-base font-semibold">
                 4. Additional Details{" "}
@@ -366,7 +382,6 @@ export default function ReportPage() {
               />
             </div>
 
-            {/* Submit Button */}
             <div className="pt-2">
               <Button
                 size="lg"
@@ -389,6 +404,7 @@ export default function ReportPage() {
       </main>
 
       <Footer />
+      <Toaster />
     </div>
   );
 }

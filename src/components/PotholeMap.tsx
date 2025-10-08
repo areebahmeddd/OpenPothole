@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Types used by the component
 type Report = {
   id: string;
   lat: number;
@@ -14,19 +13,16 @@ type Report = {
   severity?: number;
 };
 
-// Provide a global type for window.L to keep TS happy.
 declare global {
   interface Window {
     L: any;
   }
 }
 
-// Load Leaflet CSS/JS from CDN once on the client.
 async function ensureLeafletLoaded(): Promise<any> {
   if (typeof window === "undefined") return;
   if (window.L) return window.L;
 
-  // Inject CSS if not present
   if (!document.getElementById("leaflet-css")) {
     const link = document.createElement("link");
     link.id = "leaflet-css";
@@ -36,14 +32,12 @@ async function ensureLeafletLoaded(): Promise<any> {
     document.head.appendChild(link);
   }
 
-  // Inject JS if not present
   if (!document.getElementById("leaflet-js")) {
     const script = document.createElement("script");
     script.id = "leaflet-js";
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
     script.async = true;
     script.crossOrigin = "anonymous";
-    // Resolve after load
     const loaded = new Promise<void>((resolve, reject) => {
       script.onload = () => resolve();
       script.onerror = () => reject(new Error("Failed to load Leaflet"));
@@ -71,12 +65,11 @@ export default function PotholeMap({
   );
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  const defaultCenter: [number, number] = [12.9716, 77.5946]; // Bengaluru
+  const defaultCenter: [number, number] = [12.9716, 77.5946];
   const center: [number, number] =
     userLocation ||
     (reports?.[0] ? [reports[0].lat, reports[0].lng] : defaultCenter);
 
-  // Get user's current location
   const getUserLocation = () => {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by this browser.");
@@ -107,12 +100,11 @@ export default function PotholeMap({
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 300000, // 5 minutes
+        maximumAge: 300000,
       },
     );
   };
 
-  // Initialize map and keep it alive; update markers when `reports` change.
   useEffect(() => {
     let cancelled = false;
 
@@ -120,7 +112,6 @@ export default function PotholeMap({
       const L = await ensureLeafletLoaded();
       if (cancelled || !containerRef.current || !L) return;
 
-      // Resolve CSS vars to actual color values to avoid var(...) in inline styles
       const css = getComputedStyle(document.documentElement);
       const pick = (name: string, fallback: string) =>
         css.getPropertyValue(name).trim() || fallback;
@@ -131,7 +122,6 @@ export default function PotholeMap({
       const colorBorder = pick("--border", "rgba(0,0,0,0.12)");
       const colorMutedFg = pick("--muted-foreground", "#6b7280");
 
-      // Initialize map once
       if (!mapRef.current) {
         mapRef.current = L.map(containerRef.current).setView(center, 12);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -139,25 +129,22 @@ export default function PotholeMap({
           crossOrigin: true,
         }).addTo(mapRef.current);
 
-        // Get user location after map is initialized
         getUserLocation();
       } else {
         mapRef.current.setView(center, mapRef.current.getZoom() || 12);
       }
 
-      // Clear old layer if any
       if (layerRef.current) {
         layerRef.current.remove();
       }
 
       const layer = L.layerGroup();
       reports?.forEach((r: Report) => {
-        // Map status → resolved color with proper hex values for consistent styling
         const statusColor =
           r.status === "new"
             ? colorDestructive
             : r.status === "acknowledged"
-              ? "#f59e0b" // amber/orange for in-progress
+              ? "#f59e0b"
               : r.status === "fixed"
                 ? colorAccent
                 : colorPrimary;
@@ -169,7 +156,6 @@ export default function PotholeMap({
           iconAnchor: [9, 9],
         });
 
-        // Map status to display label
         const statusLabel =
           r.status === "new"
             ? "New"
@@ -226,14 +212,11 @@ export default function PotholeMap({
       layer.addTo(mapRef.current);
       layerRef.current = layer;
 
-      // Add user location marker if available
       if (userLocation && mapRef.current) {
-        // Remove existing user location marker
         if (userLocationRef.current) {
           mapRef.current.removeLayer(userLocationRef.current);
         }
 
-        // Create user location marker with pulsing effect
         const userIcon = L.divIcon({
           html: `
             <div style="
@@ -264,7 +247,7 @@ export default function PotholeMap({
           .bindPopup(
             `
             <div style="text-align: center; padding: 8px;">
-              <div style="font-weight: 600; color: #3b82f6; margin-bottom: 4px;">📍 Your Location</div>
+              <div style="font-weight: 600; color: #3b82f6; margin-bottom: 4px;">Your Location</div>
               <div style="font-size: 12px; color: #6b7280;">Current position</div>
             </div>
           `,
@@ -285,22 +268,18 @@ export default function PotholeMap({
     };
   }, [reports, center, userLocation]);
 
-  // Handle user location changes
   useEffect(() => {
     if (userLocation && mapRef.current) {
-      // Center map on user location with a smooth transition
       mapRef.current.setView(userLocation, 14, { animate: true, duration: 1 });
     }
   }, [userLocation]);
 
-  // Handle location request from button
   useEffect(() => {
     if (requestLocation) {
       getUserLocation();
     }
   }, [requestLocation]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       try {
@@ -316,9 +295,7 @@ export default function PotholeMap({
           mapRef.current.remove();
           mapRef.current = null;
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     };
   }, []);
 

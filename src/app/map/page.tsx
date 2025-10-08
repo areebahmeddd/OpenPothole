@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { DotPattern } from "@/components/ui/dot-pattern";
+import { DotPattern } from "@/components/ui/DotPattern";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,7 +17,7 @@ import dynamic from "next/dynamic";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
-const PotholeMap = dynamic(() => import("@/components/pothole-map"), {
+const PotholeMap = dynamic(() => import("@/components/PotholeMap"), {
   ssr: false,
 });
 
@@ -33,8 +33,7 @@ export default function MapPage() {
   const [minSeverity, setMinSeverity] = useState<number>(1);
   const [locationRequested, setLocationRequested] = useState<boolean>(false);
 
-  // Drag state for desktop filter box
-  const [position, setPosition] = useState({ x: 32, y: 0 }); // Default left-8 (32px) position
+  const [position, setPosition] = useState({ x: 32, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragRef = useRef<HTMLDivElement>(null);
@@ -49,13 +48,11 @@ export default function MapPage() {
     });
   }, [data, status, minSeverity]);
 
-  // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (dragRef.current) {
       dragStartTime.current = Date.now();
       const rect = dragRef.current.getBoundingClientRect();
-      // Calculate offset from where the user clicked within the element
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
@@ -68,18 +65,15 @@ export default function MapPage() {
     (e: MouseEvent) => {
       if (!isDragging) return;
 
-      // Add a small threshold to prevent accidental drags
       const timeSinceStart = Date.now() - dragStartTime.current;
       if (timeSinceStart < 50) return;
 
       e.preventDefault();
-      // Calculate new position by subtracting the offset from the mouse position
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
 
-      // Constrain to viewport bounds
-      const maxX = window.innerWidth - 384; // max-w-sm = 384px
-      const maxY = window.innerHeight - 64; // navbar height
+      const maxX = window.innerWidth - 384;
+      const maxY = window.innerHeight - 64;
 
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),
@@ -94,7 +88,6 @@ export default function MapPage() {
     setIsDragging(false);
   }, []);
 
-  // Add global mouse event listeners
   React.useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove, {
@@ -137,7 +130,6 @@ export default function MapPage() {
         )}
       </section>
 
-      {/* Location Button */}
       <div className="absolute top-4 right-4 z-20 pointer-events-auto">
         <Button
           variant="outline"
@@ -145,7 +137,6 @@ export default function MapPage() {
           className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:bg-background/95"
           onClick={() => {
             setLocationRequested(true);
-            // Force re-render of map component to request location
             setTimeout(() => setLocationRequested(false), 100);
           }}
         >
@@ -154,9 +145,7 @@ export default function MapPage() {
         </Button>
       </div>
 
-      {/* Floating Filter Card */}
       <div className="relative z-10 pointer-events-none h-full">
-        {/* Desktop: Draggable positioned */}
         <div
           className="hidden lg:flex absolute pointer-events-auto"
           style={{
@@ -174,7 +163,6 @@ export default function MapPage() {
                   : "hover:shadow-xl transition-shadow duration-200",
               )}
             >
-              {/* Drag Handle */}
               <div
                 className="flex items-center justify-center w-full h-4 cursor-move hover:bg-muted/30 rounded-md transition-colors duration-150 select-none"
                 onMouseDown={handleMouseDown}
@@ -190,7 +178,6 @@ export default function MapPage() {
                 </div>
               </div>
 
-              {/* Header */}
               <div className="space-y-2 pb-4 border-b">
                 <h1 className="text-2xl font-bold tracking-tight">
                   Pothole Map
@@ -203,9 +190,7 @@ export default function MapPage() {
                 </p>
               </div>
 
-              {/* Filters */}
               <div className="space-y-5">
-                {/* Status Filter */}
                 <div className="space-y-2.5">
                   <Label className="text-sm font-semibold">Status Filter</Label>
                   <Select value={status} onValueChange={setStatus}>
@@ -222,7 +207,6 @@ export default function MapPage() {
                   </Select>
                 </div>
 
-                {/* Severity Filter */}
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">
                     Severity Level
@@ -252,7 +236,6 @@ export default function MapPage() {
                 </div>
               </div>
 
-              {/* Info */}
               <div className="flex items-start gap-2 text-muted-foreground pt-4 border-t">
                 <svg
                   className="w-4 h-4 mt-0.5 shrink-0"
@@ -275,10 +258,8 @@ export default function MapPage() {
           </div>
         </div>
 
-        {/* Mobile: Bottom sheet */}
         <div className="lg:hidden absolute bottom-0 left-0 right-0 pointer-events-auto max-h-[60vh] overflow-y-auto">
           <div className="rounded-t-3xl border-t border-l border-r bg-card/98 backdrop-blur-md shadow-2xl p-5 space-y-5 pb-8">
-            {/* Header */}
             <div className="space-y-2">
               <h1 className="text-xl font-bold tracking-tight">Pothole Map</h1>
               <p className="text-xs text-muted-foreground">
@@ -289,9 +270,7 @@ export default function MapPage() {
               </p>
             </div>
 
-            {/* Filters - Horizontal Layout */}
             <div className="space-y-4">
-              {/* Status Filter */}
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Status</Label>
                 <Select value={status} onValueChange={setStatus}>
@@ -308,7 +287,6 @@ export default function MapPage() {
                 </Select>
               </div>
 
-              {/* Severity Filter - Compact */}
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Severity Level</Label>
                 <div className="flex items-center justify-between gap-2">
@@ -336,7 +314,6 @@ export default function MapPage() {
               </div>
             </div>
 
-            {/* Info */}
             <div className="flex items-start gap-2 text-muted-foreground pt-2">
               <svg
                 className="w-3.5 h-3.5 mt-0.5 shrink-0"

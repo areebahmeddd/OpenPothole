@@ -1,4 +1,4 @@
-import { ThemeToggle } from "@/components/ui/toggle-theme";
+import { ThemeToggle } from "@/components/ui/ToggleTheme";
 import { Github, Youtube } from "lucide-react";
 import Link from "next/link";
 
@@ -17,7 +17,7 @@ export function Header() {
 
           <nav className="flex items-center gap-4">
             <a
-              href="#"
+              href="https://www.youtube.com/watch?v=nPmozZFyn9Q"
               target="_blank"
               rel="noreferrer"
               aria-label="YouTube"

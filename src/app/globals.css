@@ -4,13 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Light mode (warm/neutral like Zen) - subtle road-brown accent */
   --primary: #8b5e3c;
   --primary-dark: #734a2e;
   --success: #16a34a;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --background: #faf7f2; /* warm paper */
+  --background: #faf7f2;
   --surface: #ffffff;
   --border: #e5e1d8;
   --text-primary: #1f2937;
@@ -22,7 +21,7 @@
   --popover: var(--surface);
   --popover-foreground: var(--text-primary);
   --primary-foreground: #ffffff;
-  --secondary: #f3f0ea; /* subtle panel */
+  --secondary: #f3f0ea;
   --secondary-foreground: #1f2937;
   --muted: #f6f4ef;
   --muted-foreground: var(--text-secondary);
@@ -49,7 +48,6 @@
 }
 
 .dark {
-  /* Dark: true black + road-brown accent */
   --primary: #8b5e3c;
   --primary-dark: #734a2e;
   --background: #000000;
@@ -136,14 +134,12 @@
     @apply bg-background text-foreground;
   }
 
-  /* Global cursor pointer for all buttons */
   button,
   [role="button"],
   .cursor-pointer {
     cursor: pointer;
   }
 
-  /* Smooth pulse animation for live indicator */
   @keyframes smooth-pulse {
     0%,
     100% {

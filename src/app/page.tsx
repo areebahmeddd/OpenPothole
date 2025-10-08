@@ -1,8 +1,8 @@
 import { Footer } from "@/components/footer";
-import { MorphingText } from "@/components/morphing-text";
-import { StatsCard } from "@/components/stats-card";
+import { MorphingText } from "@/components/MorphingText";
+import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
-import { DotPattern } from "@/components/ui/dot-pattern";
+import { DotPattern } from "@/components/ui/DotPattern";
 import { cn } from "@/lib/utils";
 import { MapPin, Plus } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +26,6 @@ export default async function HomePage() {
         )}
       />
 
-      {/* Hero Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
@@ -87,7 +86,6 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Real-time Stats Indicator */}
           <div className="flex justify-center mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-sm font-medium">
               <div className="w-2 h-2 bg-[var(--primary)] rounded-full smooth-pulse"></div>
@@ -95,7 +93,6 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Stats Cards - Part of Hero */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatsCard
               label="Potholes Reported"
