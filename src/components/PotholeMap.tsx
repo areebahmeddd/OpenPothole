@@ -111,65 +111,66 @@ export default function PotholeMap({
     let cancelled = false;
 
     async function init() {
-      const L = await ensureLeafletLoaded();
-      if (cancelled || !containerRef.current || !L) return;
+      try {
+        const L = await ensureLeafletLoaded();
+        if (cancelled || !containerRef.current || !L) return;
 
-      const css = getComputedStyle(document.documentElement);
-      const pick = (name: string, fallback: string) =>
-        css.getPropertyValue(name).trim() || fallback;
-      const colorPrimary = pick("--primary", "#2563eb");
-      const colorPrimaryFg = pick("--primary-foreground", "#ffffff");
-      const colorAccent = pick("--accent", "#22c55e");
-      const colorDestructive = pick("--destructive", "#ef4444");
-      const colorBorder = pick("--border", "rgba(0,0,0,0.12)");
-      const colorMutedFg = pick("--muted-foreground", "#6b7280");
+        const css = getComputedStyle(document.documentElement);
+        const pick = (name: string, fallback: string) =>
+          css.getPropertyValue(name).trim() || fallback;
+        const colorPrimary = pick("--primary", "#2563eb");
+        const colorPrimaryFg = pick("--primary-foreground", "#ffffff");
+        const colorAccent = pick("--accent", "#22c55e");
+        const colorDestructive = pick("--destructive", "#ef4444");
+        const colorBorder = pick("--border", "rgba(0,0,0,0.12)");
+        const colorMutedFg = pick("--muted-foreground", "#6b7280");
 
-      if (!mapRef.current) {
-        mapRef.current = L.map(containerRef.current).setView(center, 12);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap contributors",
-          crossOrigin: true,
-        }).addTo(mapRef.current);
+        if (!mapRef.current) {
+          mapRef.current = L.map(containerRef.current).setView(center, 12);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors",
+            crossOrigin: true,
+          }).addTo(mapRef.current);
 
-        getUserLocation();
-      } else {
-        mapRef.current.setView(center, mapRef.current.getZoom() || 12);
-      }
+          getUserLocation();
+        } else {
+          mapRef.current.setView(center, mapRef.current.getZoom() || 12);
+        }
 
-      if (layerRef.current) {
-        layerRef.current.remove();
-      }
+        if (layerRef.current) {
+          layerRef.current.remove();
+        }
 
-      const layer = L.layerGroup();
-      reports?.forEach((r: Report) => {
-        const statusColor =
-          r.status === "new"
-            ? colorDestructive
-            : r.status === "acknowledged"
-              ? "#f59e0b"
-              : r.status === "fixed"
-                ? colorAccent
-                : colorPrimary;
+        const layer = L.layerGroup();
+        reports?.forEach((r: Report) => {
+          const statusColor =
+            r.status === "new"
+              ? colorDestructive
+              : r.status === "acknowledged"
+                ? "#f59e0b"
+                : r.status === "fixed"
+                  ? colorAccent
+                  : colorPrimary;
 
-        const icon = L.divIcon({
-          html: `<div style="width:18px;height:18px;border-radius:50%;background:${statusColor};border:2px solid rgba(0,0,0,.2);box-shadow:0 1px 2px rgba(0,0,0,.2)"></div>`,
-          className: "",
-          iconSize: [18, 18],
-          iconAnchor: [9, 9],
-        });
+          const icon = L.divIcon({
+            html: `<div style="width:18px;height:18px;border-radius:50%;background:${statusColor};border:2px solid rgba(0,0,0,.2);box-shadow:0 1px 2px rgba(0,0,0,.2)"></div>`,
+            className: "",
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+          });
 
-        const statusLabel =
-          r.status === "new"
-            ? "New"
-            : r.status === "acknowledged"
-              ? "In Progress"
-              : r.status === "fixed"
-                ? "Fixed"
-                : r.status === "verified"
-                  ? "Verified"
-                  : r.status;
+          const statusLabel =
+            r.status === "new"
+              ? "New"
+              : r.status === "acknowledged"
+                ? "In Progress"
+                : r.status === "fixed"
+                  ? "Fixed"
+                  : r.status === "verified"
+                    ? "Verified"
+                    : r.status;
 
-        const popupHtml = `
+          const popupHtml = `
           <style>
             .leaflet-popup-content-wrapper {
               background: transparent !important;
@@ -204,23 +205,23 @@ export default function PotholeMap({
           </div>
         `;
 
-        L.marker([r.lat, r.lng], { icon }).addTo(layer).bindPopup(popupHtml, {
-          className: "custom-popup",
-          maxWidth: 300,
-          closeButton: true,
+          L.marker([r.lat, r.lng], { icon }).addTo(layer).bindPopup(popupHtml, {
+            className: "custom-popup",
+            maxWidth: 300,
+            closeButton: true,
+          });
         });
-      });
 
-      layer.addTo(mapRef.current);
-      layerRef.current = layer;
+        layer.addTo(mapRef.current);
+        layerRef.current = layer;
 
-      if (userLocation && mapRef.current) {
-        if (userLocationRef.current) {
-          mapRef.current.removeLayer(userLocationRef.current);
-        }
+        if (userLocation && mapRef.current) {
+          if (userLocationRef.current) {
+            mapRef.current.removeLayer(userLocationRef.current);
+          }
 
-        const userIcon = L.divIcon({
-          html: `
+          const userIcon = L.divIcon({
+            html: `
             <div style="
               width: 20px;
               height: 20px;
@@ -239,27 +240,34 @@ export default function PotholeMap({
               }
             </style>
           `,
-          className: "user-location-marker",
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
-        });
+            className: "user-location-marker",
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+          });
 
-        userLocationRef.current = L.marker(userLocation, { icon: userIcon })
-          .addTo(mapRef.current)
-          .bindPopup(
-            `
+          userLocationRef.current = L.marker(userLocation, { icon: userIcon })
+            .addTo(mapRef.current)
+            .bindPopup(
+              `
             <div style="text-align: center; padding: 8px;">
               <div style="font-weight: 600; color: #3b82f6; margin-bottom: 4px;">Your Location</div>
               <div style="font-size: 12px; color: #6b7280;">Current position</div>
             </div>
           `,
-            {
-              className: "user-location-popup",
-              closeButton: false,
-              autoClose: false,
-              closeOnClick: false,
-            },
-          );
+              {
+                className: "user-location-popup",
+                closeButton: false,
+                autoClose: false,
+                closeOnClick: false,
+              },
+            );
+        }
+      } catch (error) {
+        toast({
+          title: "Map Loading Failed",
+          description: "Unable to load the map. Please refresh the page.",
+          variant: "destructive",
+        });
       }
     }
 

@@ -9,7 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronDown, ChevronUp, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  MapPin,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -36,11 +43,35 @@ export default function ReportPage() {
   const [locationDetails, setLocationDetails] = useState<any>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [isPinOnMapOpen, setIsPinOnMapOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const pinMapRef = useRef<any>(null);
   const pinMarkerRef = useRef<any>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
 
   const { data: stats } = useSWR("/api/reports/stats", fetcher);
+
+  const copyToClipboard = async () => {
+    if (!successId) return;
+
+    try {
+      await navigator.clipboard.writeText(successId);
+      toast({
+        title: "Copied!",
+        description: "Tracking ID copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchLocationDetails = async (lat: number, lng: number) => {
     setLocationLoading(true);
@@ -54,6 +85,104 @@ export default function ReportPage() {
       setLocationLoading(false);
     }
   };
+
+  const searchLocation = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=en&countrycodes=in&bounded=1&viewbox=77.3,12.7,77.9,13.2`,
+      );
+      const data = await response.json();
+      setSearchResults(data);
+      setShowSearchResults(true);
+    } catch (error) {
+      console.error("Search error:", error);
+      toast({
+        title: "Search failed",
+        description: "Could not search for locations",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const selectSearchResult = (result: any) => {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    setCoords({ lat, lng });
+    fetchLocationDetails(lat, lng);
+    setSearchQuery(result.display_name);
+    setShowSearchResults(false);
+    setSearchResults([]);
+  };
+
+  const clearLocationSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const newCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          };
+          setCoords(newCoords);
+          fetchLocationDetails(newCoords.lat, newCoords.lng);
+        },
+        () => {
+          setCoords(null);
+          setLocationDetails(null);
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 },
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        searchLocation(searchQuery);
+      }, 300);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     setLocLoading(true);
@@ -178,20 +307,32 @@ export default function ReportPage() {
 
   const onFileChange = async (files?: FileList | null) => {
     if (!files) return;
+
+    const imageFiles = Array.from(files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    if (imageFiles.length === 0) return;
+
+    let processedCount = 0;
     const newPhotos: string[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file && file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          newPhotos.push(reader.result as string);
-          if (newPhotos.length === files.length) {
-            setPhotos((prev) => [...prev, ...newPhotos]);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
+    for (const file of imageFiles) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        newPhotos.push(reader.result as string);
+        processedCount++;
+
+        if (processedCount === imageFiles.length) {
+          setPhotos((prev) => [...prev, ...newPhotos]);
+        }
+      };
+      reader.onerror = () => {
+        processedCount++;
+        if (processedCount === imageFiles.length) {
+          setPhotos((prev) => [...prev, ...newPhotos]);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -283,6 +424,15 @@ export default function ReportPage() {
                 className="absolute inset-0 rounded-xl border border-[var(--primary)]/20 animate-pulse"
                 style={{ animationDuration: "3s" }}
               ></div>
+
+              <button
+                onClick={copyToClipboard}
+                className="absolute top-4 right-4 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border/50 hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10 transition-all duration-300 group/copy"
+                title="Copy tracking ID"
+              >
+                <Copy className="h-4 w-4 text-muted-foreground group-hover/copy:text-[var(--primary)] transition-colors duration-300" />
+              </button>
+
               <div className="relative z-10 text-center space-y-3">
                 <p className="text-sm font-medium text-muted-foreground group-hover:text-[var(--primary)] transition-colors duration-300">
                   Tracking ID
@@ -496,6 +646,26 @@ export default function ReportPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
+                      <div className="flex items-center justify-center">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-sm font-medium text-[var(--primary)]">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          {photos.length} photo{photos.length !== 1 ? "s" : ""}{" "}
+                          added
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {photos.map((photo, index) => (
                           <div key={index} className="relative group">
@@ -503,7 +673,7 @@ export default function ReportPage() {
                               <img
                                 alt={`Pothole photo ${index + 1}`}
                                 src={photo}
-                                className="aspect-video w-full object-cover"
+                                className="aspect-video w-full object-contain"
                               />
                               <button
                                 onClick={() => removePhoto(index)}
@@ -527,26 +697,25 @@ export default function ReportPage() {
                           </div>
                         ))}
                       </div>
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground">
-                          {photos.length} photo{photos.length !== 1 ? "s" : ""}{" "}
-                          uploaded
-                        </p>
-                        {photos.length < 5 && (
-                          <label className="inline-flex items-center gap-2 mt-2 text-sm text-[var(--primary)] hover:text-[var(--primary)]/80 transition-colors cursor-pointer">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              />
-                            </svg>
+
+                      {photos.length < 5 && (
+                        <div className="flex justify-center">
+                          <label className="inline-flex items-center gap-2 text-sm text-[var(--primary)] hover:text-[var(--primary)]/80 transition-colors cursor-pointer group">
+                            <div className="p-1 rounded-full bg-[var(--primary)]/10 group-hover:bg-[var(--primary)]/20 transition-colors">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                />
+                              </svg>
+                            </div>
                             Add more photos
                             <input
                               className="sr-only"
@@ -556,8 +725,8 @@ export default function ReportPage() {
                               onChange={(e) => onFileChange(e.target.files)}
                             />
                           </label>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -568,6 +737,81 @@ export default function ReportPage() {
                   <Label className="text-base font-semibold">
                     2. Location Details
                   </Label>
+
+                  <div className="relative" ref={searchContainerRef}>
+                    <div className="relative">
+                      <div className="absolute top-2.5 left-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-4 w-4 text-muted-foreground"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                      </div>
+                      <textarea
+                        placeholder="Search for a location..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 text-sm bg-background border border-border rounded-lg focus-visible:border-ring focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors resize-none min-h-[40px] max-h-32 overflow-y-auto"
+                        rows={1}
+                        style={
+                          {
+                            fieldSizing: "content",
+                          } as React.CSSProperties
+                        }
+                      />
+                      {isSearching ? (
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                          <Spinner className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        searchQuery && (
+                          <button
+                            onClick={clearLocationSearch}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center rounded-r-lg group"
+                            title="Clear search and use GPS location"
+                          >
+                            <X className="h-4 w-4 text-muted-foreground group-hover:text-[var(--primary)] transition-colors duration-200" />
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    {showSearchResults && searchResults.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {searchResults.map((result, index) => (
+                          <button
+                            key={index}
+                            onClick={() => selectSearchResult(result)}
+                            className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0"
+                          >
+                            <div className="text-sm font-medium text-foreground truncate">
+                              {result.display_name}
+                            </div>
+                            {result.address && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {[
+                                  result.address.road,
+                                  result.address.suburb,
+                                  result.address.city_district,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-3">
                     <div className="rounded-xl border bg-muted/30 p-4">
                       <div className="flex items-start gap-3">

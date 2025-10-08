@@ -1,21 +1,40 @@
+"use client";
+
 import { Footer } from "@/components/footer";
 import { MorphingText } from "@/components/MorphingText";
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
 import { DotPattern } from "@/components/ui/DotPattern";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { CheckCircle, Eye, MapPin, Plus, Shield, Users } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-async function getStats() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reports/stats`, {
-    cache: "no-store",
-  }).catch(() => undefined);
-  if (!res || !res.ok) return { total: 0, fixed: 0, rate: 0 };
-  return res.json();
-}
+export default function HomePage() {
+  const [stats, setStats] = useState({ total: 0, fixed: 0, rate: 0 });
+  const [whatIsRef, whatIsVisible] = useScrollAnimation();
+  const [howItWorksRef, howItWorksVisible] = useScrollAnimation();
 
-export default async function HomePage() {
-  const stats = await getStats();
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/reports/stats`,
+          {
+            cache: "no-store",
+          },
+        );
+        if (res && res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -122,14 +141,33 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+        <section
+          ref={whatIsRef}
+          className={`py-16 px-4 sm:px-6 lg:px-8 bg-background transition-all duration-1000 ${
+            whatIsVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-8"
+          }`}
+        >
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              <h2
+                className={`text-3xl sm:text-4xl font-bold mb-4 transition-all duration-1000 delay-200 ${
+                  whatIsVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
                 What is{" "}
                 <span className="text-[var(--primary)]">OpenPothole</span>?
               </h2>
-              <p className="max-w-2xl mx-auto text-muted-foreground">
+              <p
+                className={`max-w-2xl mx-auto text-muted-foreground transition-all duration-1000 delay-300 ${
+                  whatIsVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
                 A community-driven platform where citizens report potholes and
                 verify repairs themselves. Built on{" "}
                 <a
@@ -145,7 +183,13 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              <div className="flex flex-col items-center text-center">
+              <div
+                className={`flex flex-col items-center text-center transition-all duration-1000 delay-400 ${
+                  whatIsVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
+                }`}
+              >
                 <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-full flex items-center justify-center mb-6">
                   <Users className="h-8 w-8 text-[var(--primary)]" />
                 </div>
@@ -156,7 +200,13 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="flex flex-col items-center text-center">
+              <div
+                className={`flex flex-col items-center text-center transition-all duration-1000 delay-500 ${
+                  whatIsVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
+                }`}
+              >
                 <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-full flex items-center justify-center mb-6">
                   <Shield className="h-8 w-8 text-[var(--primary)]" />
                 </div>
@@ -169,7 +219,13 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="flex flex-col items-center text-center">
+              <div
+                className={`flex flex-col items-center text-center transition-all duration-1000 delay-600 ${
+                  whatIsVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
+                }`}
+              >
                 <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-full flex items-center justify-center mb-6">
                   <CheckCircle className="h-8 w-8 text-[var(--primary)]" />
                 </div>
@@ -185,20 +241,45 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="py-20 lg:py-32 bg-muted/30">
+        <section
+          ref={howItWorksRef}
+          className={`py-20 lg:py-32 bg-muted/30 transition-all duration-1000 ${
+            howItWorksVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-8"
+          }`}
+        >
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center mb-16">
-              <h2 className="text-3xl lg:text-4xl font-light tracking-tight text-foreground mb-4">
+              <h2
+                className={`text-3xl lg:text-4xl font-light tracking-tight text-foreground mb-4 transition-all duration-1000 delay-200 ${
+                  howItWorksVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
                 How it <span className="text-[var(--primary)]">Works</span>
               </h2>
-              <p className="text-lg text-muted-foreground font-light max-w-2xl mx-auto">
+              <p
+                className={`text-lg text-muted-foreground font-light max-w-2xl mx-auto transition-all duration-1000 delay-300 ${
+                  howItWorksVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
                 Simple, fast, and effective pothole reporting in three steps. No
                 technical expertise required.
               </p>
             </div>
 
             <div className="relative">
-              <div className="absolute top-4 inset-x-0 hidden lg:block">
+              <div
+                className={`absolute top-4 inset-x-0 hidden lg:block transition-all duration-1000 delay-400 ${
+                  howItWorksVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
                 <div className="flex justify-center items-center px-16">
                   <div className="flex-1 h-0.5 bg-[var(--primary)]/20"></div>
                   <div className="w-8 h-8 rounded-full bg-background border-2 border-[var(--primary)]/20 flex items-center justify-center mx-4">
@@ -213,7 +294,13 @@ export default async function HomePage() {
               </div>
 
               <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 relative z-10">
-                <div className="flex flex-col items-center text-center">
+                <div
+                  className={`flex flex-col items-center text-center transition-all duration-1000 delay-500 ${
+                    howItWorksVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-6"
+                  }`}
+                >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background border-2 border-[var(--primary)]/20 mb-6 shadow-sm relative z-20">
                     <Plus className="h-8 w-8 text-[var(--primary)]" />
                   </div>
@@ -231,7 +318,13 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center text-center">
+                <div
+                  className={`flex flex-col items-center text-center transition-all duration-1000 delay-600 ${
+                    howItWorksVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-6"
+                  }`}
+                >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background border-2 border-[var(--primary)]/20 mb-6 shadow-sm relative z-20">
                     <Eye className="h-8 w-8 text-[var(--primary)]" />
                   </div>
@@ -249,7 +342,13 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center text-center">
+                <div
+                  className={`flex flex-col items-center text-center transition-all duration-1000 delay-700 ${
+                    howItWorksVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-6"
+                  }`}
+                >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background border-2 border-[var(--primary)]/20 mb-6 shadow-sm relative z-20">
                     <CheckCircle className="h-8 w-8 text-[var(--primary)]" />
                   </div>
