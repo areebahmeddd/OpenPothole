@@ -134,7 +134,7 @@ export default function MapPage() {
           className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:bg-background/95 transition-all duration-300 hover:scale-105 hover:shadow-xl"
           onClick={() => {
             setLocationRequested(true);
-            setTimeout(() => setLocationRequested(false), 100);
+            setTimeout(() => setLocationRequested(false), 1000);
           }}
         >
           <Navigation className="h-4 w-4 mr-2" />
