@@ -1,16 +1,15 @@
+import { Footer } from "@/components/footer";
+import { MorphingText } from "@/components/morphing-text";
 import { Button } from "@/components/ui/button";
 import { DotPattern } from "@/components/ui/dot-pattern";
-import { Footer } from "@/components/footer";
 import { cn } from "@/lib/utils";
+import { MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 
 async function getStats() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/reports/stats`,
-    {
-      cache: "no-store",
-    },
-  ).catch(() => undefined);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reports/stats`, {
+    cache: "no-store",
+  }).catch(() => undefined);
   if (!res || !res.ok) return { total: 0, fixed: 0, rate: 0 };
   return res.json();
 }
@@ -34,24 +33,48 @@ export default async function HomePage() {
               <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-[var(--primary)]">
                 OpenPothole
               </h1>
-              <p className="text-2xl sm:text-3xl text-muted-foreground mt-4 font-semibold">
-                Community-Driven Civic Action
-              </p>
+              <MorphingText
+                texts={[
+                  "Community-Driven Civic Action",
+                  "ಸಮುದಾಯ-ಚಾಲಿತ ನಾಗರಿಕ ಕ್ರಿಯೆ",
+                  "समुदाय-संचालित नागरिक कार्य",
+                ]}
+                className="text-muted-foreground mt-4"
+              />
               <p className="mt-6 text-lg text-muted-foreground">
-                Fast, anonymous pothole tracking for Bangalore. Report issues, track fixes, and hold authorities accountable.
+                Fast, anonymous pothole tracking for Bangalore. Report issues,
+                track fixes, and hold authorities accountable.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
-                <Button asChild size="lg" className="font-bold px-8 bg-[var(--primary)] hover:bg-[var(--primary-dark)]">
-                  <Link href="/report">Report Pothole</Link>
+                <Button
+                  asChild
+                  size="lg"
+                  className="font-bold px-8 bg-[var(--primary)] hover:bg-[var(--primary)]"
+                >
+                  <Link href="/report" className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Report Pothole
+                  </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="font-bold">
-                  <Link href="/map">View Map</Link>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="font-bold hover:bg-transparent"
+                >
+                  <Link href="/map" className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    View Map
+                  </Link>
                 </Button>
               </div>
             </div>
             <div className="flex justify-center relative">
               <div className="relative w-64 h-64 sm:w-96 sm:h-96">
-                <div className="absolute inset-0 bg-stone-100 dark:bg-stone-800/20 rounded-full animate-pulse" style={{ animationDuration: '3s' }}></div>
+                <div
+                  className="absolute inset-0 bg-stone-100 dark:bg-stone-800/20 rounded-full animate-pulse"
+                  style={{ animationDuration: "3s" }}
+                ></div>
                 <div className="relative z-10 w-full h-full">
                   <div className="absolute inset-0 rounded-full bg-black/40 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]" />
                   <div className="absolute inset-3 rounded-full bg-[#1a1a1a]" />
@@ -63,24 +86,38 @@ export default async function HomePage() {
             </div>
           </div>
 
+          {/* Real-time Stats Indicator */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-sm font-medium">
+              <div className="w-2 h-2 bg-[var(--primary)] rounded-full smooth-pulse"></div>
+              Real-time data
+            </div>
+          </div>
+
           {/* Stats Cards - Part of Hero */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-colors duration-300">
-              <p className="text-sm font-medium text-muted-foreground mb-3">Potholes Reported</p>
+              <p className="text-sm font-medium text-muted-foreground mb-3">
+                Potholes Reported
+              </p>
               <h3 className="text-5xl font-bold tracking-tight">
                 {stats.total?.toLocaleString() ?? "0"}
               </h3>
             </div>
 
             <div className="flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-colors duration-300">
-              <p className="text-sm font-medium text-muted-foreground mb-3">Potholes Fixed</p>
+              <p className="text-sm font-medium text-muted-foreground mb-3">
+                Potholes Fixed
+              </p>
               <h3 className="text-5xl font-bold tracking-tight">
                 {stats.fixed?.toLocaleString() ?? "0"}
               </h3>
             </div>
 
             <div className="flex flex-col justify-between rounded-xl bg-card/50 backdrop-blur-sm border p-8 hover:border-[var(--primary)]/50 transition-colors duration-300">
-              <p className="text-sm font-medium text-muted-foreground mb-3">Resolution Rate</p>
+              <p className="text-sm font-medium text-muted-foreground mb-3">
+                Resolution Rate
+              </p>
               <h3 className="text-5xl font-bold tracking-tight">
                 {Math.round(stats.rate || 0)}%
               </h3>

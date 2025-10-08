@@ -1,5 +1,5 @@
 import { ThemeToggle } from "@/components/ui/toggle-theme";
-import { Github } from "lucide-react";
+import { Github, Youtube } from "lucide-react";
 import Link from "next/link";
 
 export function Header() {
@@ -16,6 +16,15 @@ export function Header() {
           </div>
 
           <nav className="flex items-center gap-4">
+            <a
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="YouTube"
+              className="text-muted-foreground hover:text-[var(--primary)] transition-colors"
+            >
+              <Youtube className="h-5 w-5" />
+            </a>
             <a
               href="https://github.com/areebahmeddd/OpenPothole"
               target="_blank"

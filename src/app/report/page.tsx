@@ -200,7 +200,7 @@ export default function ReportPage() {
               {!photoDataUrl ? (
                 <label
                   className={cn(
-                    "relative flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed bg-muted/30 cursor-pointer hover:bg-muted/50 hover:border-[var(--primary)]/50 transition-all group",
+                    "relative flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed bg-muted/30 hover:bg-muted/50 hover:border-[var(--primary)]/50 transition-all group",
                   )}
                 >
                   <input

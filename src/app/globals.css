@@ -135,4 +135,28 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Global cursor pointer for all buttons */
+  button,
+  [role="button"],
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  /* Smooth pulse animation for live indicator */
+  @keyframes smooth-pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.1);
+    }
+  }
+
+  .smooth-pulse {
+    animation: smooth-pulse 2s ease-in-out infinite;
+  }
 }

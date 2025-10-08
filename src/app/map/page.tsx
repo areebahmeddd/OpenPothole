@@ -142,7 +142,7 @@ export default function MapPage() {
         <Button
           variant="outline"
           size="sm"
-          className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="bg-background/95 backdrop-blur-md border-border/50 shadow-lg hover:bg-background/95"
           onClick={() => {
             setLocationRequested(true);
             // Force re-render of map component to request location
