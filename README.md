@@ -20,14 +20,14 @@ Built with Next.js + TypeScript, Tailwind, Leaflet/OpenStreetMap, and Firestore.
 .
 ├── public/                     # Static assets (manifest, icons, robots, sitemap)
 ├── src/
-│   ├── app/                    # Next.js App Router pages & API routes
-│   │   ├── api/
-│   │   │   └── reports/        # Report CRUD + stats routes
-│   │   ├── map/                # /map page
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/reports/        # API routes
+│   │   ├── map/                # Map page
 │   │   ├── potholes/[id]/      # Individual report page
 │   │   └── report/             # Report creation page
-│   ├── components/             # UI components (map, stats, header, footer, ui/*)
-│   ├── hooks/                  # Custom hooks (toast, mobile)
+│   ├── components/             # UI components
+│   │   └── ui/                 # Reusable UI components
+│   ├── hooks/                  # Custom React hooks
 │   └── lib/                    # Utilities
 ├── .github/workflows/          # CI (build + Vercel deploy)
 ├── .devcontainer/              # Dev container config
