@@ -14,6 +14,8 @@ Built with Next.js + TypeScript, Tailwind, Leaflet/OpenStreetMap, and Firestore.
 - **Open311‑Ready APIs**: Service discovery and request endpoints for future gov integration.
 - **Anti‑Spam**: Device fingerprinting, rate‑limiting, required photo evidence.
 
+> NOTE: The backend is not built yet. Only the frontend is production‑ready. API endpoints such as `/reports/stats` (real‑time data) and `/reports/[id]` (individual pothole details) are not ready and may return mock or placeholder data.
+
 ## 🗂️ Project Structure
 
 ```

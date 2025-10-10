@@ -131,7 +131,7 @@ export default function Component({ prop }: ComponentProps) {
 
 ## API Design
 
-The API design is compatible with the [Open311 standard](https://www.open311.org/) for civic issue reporting, ensuring compatibility with government systems and third-party integrations.
+The API design implements the Open1533 standard, which is inspired by the [Open311 standard](https://www.open311.org/) for civic issue reporting. This ensures compatibility with government systems and third-party integrations.
 
 ### Report Data Model
 

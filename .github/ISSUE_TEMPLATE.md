@@ -18,6 +18,7 @@
 
 ### Environment
 
-- **OS**: <!-- Example: Windows 11, macOS 15 -->
-- **Browser**: <!-- Example: Chrome 126, Firefox 141 -->
-- **Python Version**: <!-- Example: Python 3.11.9 -->
+- **OS**: <!-- Example: Windows 11, macOS 15, Ubuntu 24 -->
+- **Browser**: <!-- Example: Chrome 126, Firefox 141, Safari 18 -->
+- **Device**: <!-- Example: Desktop, Mobile, Tablet -->
+- **Node.js Version**: <!-- Example: Node.js 22.x -->
