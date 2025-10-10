@@ -128,7 +128,8 @@ export default function PotholeMap({
         if (!mapRef.current) {
           mapRef.current = L.map(containerRef.current).setView(center, 12);
           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "&copy; OpenStreetMap contributors",
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             crossOrigin: true,
           }).addTo(mapRef.current);
 

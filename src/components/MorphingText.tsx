@@ -22,8 +22,8 @@ export const MorphingText: React.FC<AnimatedTextProps> = ({
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % texts.length);
         setIsVisible(true);
-      }, 400);
-    }, 4000);
+      }, 300);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [texts.length]);

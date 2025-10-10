@@ -1,5 +1,6 @@
 "use client";
 
+import AnnouncementBar from "@/components/AnnouncementBar";
 import { Footer } from "@/components/footer";
 import { MorphingText } from "@/components/MorphingText";
 import { StatsCard } from "@/components/StatsCard";
@@ -38,6 +39,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <AnnouncementBar />
       <div className="relative">
         <DotPattern className="fill-muted-foreground/40 [mask-image:radial-gradient(1200px_circle_at_center,white,transparent)]" />
 
@@ -54,9 +56,9 @@ export default function HomePage() {
                 <div className="animate-fade-in-up animate-delay-200">
                   <MorphingText
                     texts={[
-                      "Community-Driven Civic Action",
                       "ಸಮುದಾಯ-ಚಾಲಿತ ನಾಗರಿಕ ಕ್ರಿಯೆ",
                       "समुदाय-संचालित नागरिक कार्य",
+                      "Community-Driven Civic Action",
                     ]}
                     className="text-muted-foreground mt-4"
                   />
