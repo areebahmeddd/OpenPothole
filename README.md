@@ -1,6 +1,6 @@
 # 🧠 Project Description
 
-**OpenPothole** (A project under Open India Initiative) is a minimalist, community-driven pothole reporting platform for Bangalore, inspired by the [Open311 standard](https://www.open311.org). It enables anyone to report potholes without login, see them on a public map, and verify fixes through community participation. The goal is radical transparency, mobile-first UX, and Gen‑Z friendly design. [ [Project Demo](https://www.youtube.com/watch?v=nPmozZFyn9Q) ]
+**OpenPothole** (A project under Open India Initiative) is a minimalist, community-driven pothole reporting platform for Bangalore, inspired by the [Open311 API standard](https://www.open311.org). It enables anyone to report potholes without login, see them on a public map, and verify fixes through community participation. The goal is radical transparency, mobile-first UX, and Gen‑Z friendly design. [ [Project Demo](https://www.youtube.com/watch?v=nPmozZFyn9Q) ]
 
 Built with Next.js + TypeScript, Tailwind, Leaflet/OpenStreetMap, and Firestore.
 
@@ -14,7 +14,7 @@ Built with Next.js + TypeScript, Tailwind, Leaflet/OpenStreetMap, and Firestore.
 - **Open311‑Ready APIs**: Service discovery and request endpoints for future gov integration.
 - **Anti‑Spam**: Device fingerprinting, rate‑limiting, required photo evidence.
 
-> NOTE: The backend is not built yet. Only the frontend is production‑ready. API endpoints such as `/reports/stats` (real‑time data) and `/reports/[id]` (individual pothole details) are not ready and may return mock or placeholder data.
+> NOTE: The backend is not built yet. Only the frontend is production‑ready. API endpoints such as `/reports/stats` (real‑time data) and `/portholes/[id]` (individual pothole details) are not ready and may return mock or placeholder data.
 
 ## 🗂️ Project Structure
 
