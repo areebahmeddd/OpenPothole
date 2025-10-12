@@ -252,7 +252,8 @@ export default function ReportPage() {
           14,
         );
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap contributors",
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           crossOrigin: true,
         }).addTo(pinMapRef.current);
 
